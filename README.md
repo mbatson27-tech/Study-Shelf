@@ -9,6 +9,7 @@ A study organizer for students. Make a shelf for each class, add anything (PDFs,
 - The whole app is one file, `index.html`. No build step.
 - Everything a student adds is saved in their own browser (IndexedDB). Nothing is uploaded to a server, and nothing syncs between devices.
 - Comes with example classes and a ready-made Islamic Art (AP Art History, Ch. 9) set: summary, 46 flashcards, a 20-question quiz and practice questions.
+- **All classes** shows every class as a card with its progress. The sidebar can be hidden (it becomes a slide-in menu on phones), and there is a light and a dark mode.
 
 ## AI
 
