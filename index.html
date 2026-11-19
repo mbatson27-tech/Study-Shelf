@@ -1,0 +1,1045 @@
+<title>Study Shelf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: a working notebook, not a game. Hairline rules, square corners, monochrome ink with one highlighter yellow. Serif for titles, plain sans for UI, mono for course codes and counts. */
+:root{
+  --bg:#f6f6f4; --surface:#ffffff; --surface-2:#f0f0ed; --ink:#16171a; --muted:#5f6168; --faint:#8d8f96; --line:#e2e2de; --line-strong:#c9c9c3;
+  --accent:#16171a; --accent-ink:#ffffff; --accent-soft:#ececE8; --hl:#ffe14d; --hl-ink:#16171a; --rule:#d9534f;
+  --good:#1f7a4a; --good-soft:#eaf3ed; --bad:#b4373d; --bad-soft:#f8eaea;
+  --shadow:none; --shadow-lg:0 24px 48px -24px rgba(20,20,24,.28);
+  --serif:"Newsreader", "Iowan Old Style", Georgia, serif;
+  --font:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r-sm:3px; --r:4px; --r-lg:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121315; --surface:#18191c; --surface-2:#202125; --ink:#ececea; --muted:#a3a5ab; --faint:#7b7d84; --line:#2a2b30; --line-strong:#3b3c42;
+  --accent:#ececea; --accent-ink:#121315; --accent-soft:#25262b; --hl:#e6c93a; --hl-ink:#16171a; --rule:#e0716c;
+  --good:#5cc08a; --good-soft:#16261d; --bad:#ef7f84; --bad-soft:#2e1a1c; --shadow-lg:0 24px 48px -24px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121315; --surface:#18191c; --surface-2:#202125; --ink:#ececea; --muted:#a3a5ab; --faint:#7b7d84; --line:#2a2b30; --line-strong:#3b3c42;
+  --accent:#ececea; --accent-ink:#121315; --accent-soft:#25262b; --hl:#e6c93a; --hl-ink:#16171a; --rule:#e0716c;
+  --good:#5cc08a; --good-soft:#16261d; --bad:#ef7f84; --bad-soft:#2e1a1c; --shadow-lg:0 24px 48px -24px rgba(0,0,0,.8); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+h1,h2,h3,h4{margin:0;line-height:1.2;text-wrap:balance;font-weight:600}
+svg.i{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:square;stroke-linejoin:miter}
+.label,.mono{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.hl{background:linear-gradient(transparent 55%, var(--hl) 55%, var(--hl) 92%, transparent 92%);color:inherit;padding:0 .1em}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 14px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--surface);font-weight:500;font-size:14px;transition:background .12s, border-color .12s}
+.btn:hover{background:var(--surface-2);border-color:var(--ink)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--ink);opacity:.88}
+.btn.soft{background:var(--ink);border-color:var(--ink);color:var(--accent-ink)}
+.btn.soft:hover{opacity:.88;background:var(--ink)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.quiet:hover{background:var(--surface-2);color:var(--ink);border-color:transparent}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.icon-btn{width:40px;min-height:40px;padding:0}
+
+/* shell */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
+.side{background:var(--bg);border-right:1px solid var(--line);padding-block:24px 18px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:16px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:baseline;gap:10px;padding:0 8px}
+.logo{display:none}
+.brand b{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:-.01em}
+.beta{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;color:var(--hl-ink);background:var(--hl);padding:0 5px}
+.side-sec{display:flex;flex-direction:column;gap:2px}
+.side-sec .label{padding:0 8px 8px}
+.class-list{display:flex;flex-direction:column;list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.class-list li{border-bottom:1px solid var(--line)}
+.class-btn{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:8px;min-height:52px;padding:8px 8px 8px 12px;border:0;background:transparent;text-align:left;color:var(--muted);position:relative}
+.class-btn:hover{background:var(--surface-2);color:var(--ink)}
+.class-btn[aria-current="true"]{color:var(--ink);background:var(--surface)}
+.class-btn[aria-current="true"]::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--ink)}
+.cicon{grid-column:1;grid-row:1;font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--faint)}
+.class-btn .nm{grid-column:1;grid-row:2;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.count{grid-column:2;grid-row:1 / span 2;align-self:center;font-family:var(--mono);font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.new-class{display:flex;flex-direction:column;gap:8px;padding:12px 8px}
+.new-class label{font-size:13px;font-weight:500}
+.new-class .row{display:flex;gap:6px}
+.field{width:100%;min-height:40px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface)}
+.field:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.side-foot{margin-top:auto;display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted);padding:12px 8px 0;border-top:1px solid var(--line)}
+.side-foot svg{margin-top:2px;color:var(--faint);width:15px;height:15px}
+
+.main{padding-block:32px 64px;padding-left:40px;padding-right:max(40px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:28px;min-width:0;max-width:1320px;width:100%}
+.head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--ink)}
+.head-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.head .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--muted)}
+.head h1{font-family:var(--serif);font-size:42px;font-weight:500;letter-spacing:-.015em;line-height:1.05}
+.head .meta{display:flex;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:13.5px}
+.head .meta span{display:inline-flex;align-items:center;gap:6px}
+.head .meta b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.head .meta svg{display:none}
+.head-actions{display:flex;gap:2px}
+.rename-input{font-family:var(--serif);font-size:32px;font-weight:500;max-width:480px}
+
+.grid{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:32px;align-items:start}
+.card{background:transparent;border:0;min-width:0}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:0 0 12px}
+.card-h h2{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.card-h .sub{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.card + .card, .grid > .card:last-child{background:var(--surface);border:1px solid var(--line)}
+.grid > .card:last-child .card-h{padding:16px 20px 0}
+
+/* materials */
+.add-row{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;padding:0 0 12px}
+.drop-hint{border:1px dashed var(--line-strong);padding:28px 18px;text-align:left;color:var(--muted);font-size:14px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;background:var(--surface)}
+.drop-hint .ring{display:none}
+.drop-hint b{color:var(--ink);font-family:var(--serif);font-size:19px;font-weight:500}
+.mats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.mat{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.mat:hover{background:var(--surface)}
+.mat.off .info,.mat.off .ficon{opacity:.5}
+.check{position:relative;width:18px;height:18px;flex:none}
+.check input{position:absolute;inset:-11px;opacity:0;cursor:pointer;width:40px;height:40px;margin:0}
+.check span{position:absolute;inset:0;border:1.5px solid var(--line-strong);border-radius:2px;display:grid;place-items:center;pointer-events:none;background:var(--surface)}
+.check svg{width:12px;height:12px;stroke:var(--accent-ink);stroke-width:3;opacity:0}
+.check input:checked + span{background:var(--ink);border-color:var(--ink)}
+.check input:checked + span svg{opacity:1}
+.check input:focus-visible + span{outline:2px solid var(--ink);outline-offset:2px}
+.check input:disabled{cursor:not-allowed}
+.check input:disabled + span{opacity:.35}
+.ficon{width:38px;height:46px;display:grid;place-items:end center;padding-bottom:6px;flex:none;border:1px solid var(--line-strong);background:var(--surface);color:var(--muted);font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.04em;position:relative;clip-path:polygon(0 0, 70% 0, 100% 22%, 100% 100%, 0 100%)}
+.ficon::after{content:"";position:absolute;top:-1px;right:-1px;width:12px;height:11px;background:var(--line-strong)}
+.ficon svg{width:15px;height:15px;margin-bottom:2px}
+.ficon img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.info{min-width:0}
+.info .t{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info .m{font-size:12.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-variant-numeric:tabular-nums}
+.info .m .dot{width:3px;height:3px;background:var(--faint)}
+.pill{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;padding:0 5px;border:1px solid var(--line-strong);color:var(--muted)}
+.pill.ex{background:var(--hl);border-color:var(--hl);color:var(--hl-ink)}
+.pill.warn{border-color:var(--bad);color:var(--bad)}
+.mat .rm{opacity:0;transition:opacity .12s}
+.mat:hover .rm,.mat:focus-within .rm{opacity:1}
+@media (hover:none){.mat .rm{opacity:1}}
+
+/* study */
+.seg{display:flex;gap:0;margin:12px 20px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.seg button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:transparent;font-weight:500;font-size:14px;color:var(--muted);white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.seg .done{width:5px;height:5px;background:var(--good)}
+.gen{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line)}
+.gen .note{font-size:13.5px;color:var(--muted)}
+.gen .note b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.stage{padding:32px 28px;min-height:380px;display:flex;flex-direction:column}
+.empty{margin:auto;max-width:360px;text-align:left;color:var(--muted);display:flex;flex-direction:column;gap:8px;padding:24px 0}
+.empty .ring{display:none}
+.empty b{color:var(--ink);font-family:var(--serif);font-size:22px;font-weight:500}
+.loading{margin:auto;display:flex;flex-direction:column;align-items:flex-start;gap:10px;color:var(--muted);max-width:340px}
+.loader{width:120px;height:2px;background:var(--line);position:relative;overflow:hidden}
+.loader::after{content:"";position:absolute;inset:0;width:40%;background:var(--ink);animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+.alert{display:flex;gap:10px;align-items:flex-start;border-left:2px solid var(--bad);background:var(--bad-soft);color:var(--bad);padding:10px 14px;font-size:14px;margin-bottom:20px}
+.alert svg{margin-top:2px}
+.foot-note{display:flex;align-items:center;gap:8px;margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.foot-note svg{width:14px;height:14px}
+
+/* summary */
+.sum{display:flex;flex-direction:column;gap:28px;max-width:700px}
+.sum h3{font-family:var(--serif);font-size:30px;font-weight:500;letter-spacing:-.01em}
+.sum .lead{font-family:var(--serif);font-size:18px;line-height:1.55;color:var(--ink);margin:10px 0 0;max-width:62ch}
+.sum h4{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.points li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;max-width:65ch}
+.points li span{font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:2px}
+.terms{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.term{padding:14px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.term b{font-weight:600;font-size:14.5px}
+.term p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+
+/* flashcards: index cards */
+.fc-area{display:flex;flex-direction:column;align-items:center;gap:22px;margin:auto 0;width:100%}
+.progress{width:100%;max-width:580px;display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{flex:1;height:2px;background:var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%;background:var(--ink);transition:width .3s}
+.bar i.g{background:var(--good)}
+.bar i.y{background:var(--hl)}
+.fc{width:100%;max-width:580px;aspect-ratio:5/3;perspective:1600px;border:0;background:transparent;padding:0;cursor:pointer}
+.fc.lined .face{background-image:linear-gradient(var(--rule),var(--rule)), repeating-linear-gradient(transparent 0 29px, var(--line) 29px 30px);background-size:100% 1px, 100% calc(100% - 41px);background-position:0 40px, 0 41px;background-repeat:no-repeat, no-repeat}
+.fc-tools{width:100%;max-width:580px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r)}
+.toggle button{min-height:34px;padding:0 12px;border:0;background:transparent;font-size:13px;color:var(--muted)}
+.toggle button + button{border-left:1px solid var(--line-strong)}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--accent-ink)}
+.ficon.pic{cursor:zoom-in;padding:0;clip-path:none}
+.ficon.pic::after{display:none}
+.ficon .n{position:absolute;right:2px;bottom:2px;background:var(--ink);color:var(--accent-ink);font-family:var(--mono);font-size:9px;padding:0 3px}
+.viewer{max-width:min(960px,100%);background:var(--surface);border:1px solid var(--line-strong);display:flex;flex-direction:column;max-height:calc(100% - 32px)}
+.viewer-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 16px;border-bottom:1px solid var(--line)}
+.viewer-h span{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.viewer-b{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--surface-2)}
+.viewer-b img{display:block;max-width:100%;height:auto;margin:0 auto}
+.fc-in{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d}
+.fc.flip .fc-in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:44px 32px 32px;text-align:center;overflow:auto;border:1px solid var(--line-strong);background:var(--surface);box-shadow:var(--shadow-lg);}
+.face.back{transform:rotateY(180deg)}
+.face .tag{position:absolute;top:13px;left:18px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.face .flip-hint{position:absolute;bottom:12px;right:16px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.face .flip-hint svg{width:13px;height:13px}
+.face .q{font-family:var(--serif);font-size:clamp(20px, 2.8vw, 28px);font-weight:500;max-width:26ch;line-height:1.25}
+.face .a{font-size:17px;max-width:40ch}
+.fc-nav{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;justify-content:center;max-width:100%}
+.fc-nav .sep{width:1px;height:24px;background:var(--line);margin:0 6px}
+.legend{display:flex;gap:18px;font-family:var(--mono);font-size:12px;color:var(--muted);flex-wrap:wrap;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:8px;height:8px;display:inline-block}
+
+/* quiz */
+.quiz{max-width:640px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.quiz .progress{max-width:none}
+.quiz .qtext{font-family:var(--serif);font-size:24px;font-weight:500;line-height:1.3}
+.choices{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.choice{display:flex;gap:16px;align-items:center;text-align:left;min-height:54px;border:0;border-bottom:1px solid var(--line);background:transparent;padding:10px 8px;font-size:15px}
+.choice:hover:not(:disabled){background:var(--surface-2)}
+.choice .k{font-family:var(--mono);font-size:12px;color:var(--faint);width:18px;flex:none}
+.choice .tx{flex:1}
+.choice.right{background:var(--good-soft);box-shadow:inset 2px 0 0 var(--good)}
+.choice.right .k{color:var(--good);font-weight:600}
+.choice.wrong{background:var(--bad-soft);box-shadow:inset 2px 0 0 var(--bad)}
+.choice.wrong .k{color:var(--bad);font-weight:600}
+.choice:disabled{cursor:default;color:var(--ink)}
+.explain{display:flex;gap:10px;padding:2px 0 2px 14px;border-left:2px solid var(--hl);font-size:14.5px}
+.explain b{flex:none;font-weight:600}
+.explain.ok b{color:var(--good)} .explain.no b{color:var(--bad)}
+.quiz-nav{display:flex;justify-content:space-between;gap:10px}
+.result{margin:auto;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:460px;width:100%}
+.ring-score{background:none!important;width:auto;height:auto}
+.ring-score div{font-family:var(--serif);font-size:72px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;width:auto;height:auto;background:none}
+.result h3{font-family:var(--serif);font-weight:500;font-size:22px!important}
+.review{display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.review button{width:44px;height:44px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-size:13px}
+.review .ok{color:var(--good);box-shadow:inset 0 -2px 0 var(--good)} .review .no{color:var(--bad);box-shadow:inset 0 -2px 0 var(--bad)}
+
+/* practice */
+.pq{display:flex;flex-direction:column;gap:0;max-width:700px;border-top:1px solid var(--line)}
+.pq-item{border-bottom:1px solid var(--line);padding:20px 0;display:flex;flex-direction:column;gap:10px}
+.pq-q{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;font-family:var(--serif);font-size:18px;font-weight:500;line-height:1.35}
+.pq-q span{font-family:var(--mono);font-size:12px;color:var(--faint);padding-top:4px}
+.pq textarea{width:100%;min-height:88px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);resize:vertical}
+.pq textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.pq label{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.pq .btn.soft{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.pq .btn.soft:hover{background:var(--surface-2);opacity:1}
+.model{padding:2px 0 2px 14px;border-left:2px solid var(--hl);font-size:14.5px}
+.model b{display:block;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+
+/* overlays */
+.scrim{position:fixed;inset:0;background:rgba(12,12,14,.5);display:grid;place-items:center;padding:16px;z-index:30}
+.sheet{width:100%;max-width:560px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:24px;display:flex;flex-direction:column;gap:16px;max-height:calc(100% - 32px);overflow:auto}
+.sheet h2{font-family:var(--serif);font-size:24px;font-weight:500}
+.sheet p{margin:0;color:var(--muted)}
+.sheet .fld{display:flex;flex-direction:column;gap:6px}
+.sheet .fld label{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.sheet textarea.field{min-height:220px;resize:vertical}
+.sheet .acts{display:flex;justify-content:flex-end;gap:8px}
+.dropzone{position:fixed;inset:0;z-index:40;background:rgba(246,246,244,.82);display:grid;place-items:center;pointer-events:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .dropzone{background:rgba(18,19,21,.85)}}
+:root[data-theme="dark"] .dropzone{background:rgba(18,19,21,.85)}
+.dropzone div{border:1.5px dashed var(--ink);padding:40px 56px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;font-family:var(--serif);font-size:24px;background:var(--surface)}
+.dropzone svg{width:28px;height:28px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-size:13.5px;z-index:50;max-width:calc(100% - 32px)}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation-duration:0s!important}}
+@media (max-width: 1060px){ .grid{grid-template-columns:minmax(0,1fr)} }
+@media (max-width: 760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:16px 8px;gap:12px}
+  .side-sec .label{display:none}
+  .side{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px;row-gap:10px}
+  .brand{grid-column:1;grid-row:1}
+  .side > nav{grid-column:1 / -1;grid-row:2}
+  .side > .side-sec:not(nav){grid-column:2;grid-row:1}
+  .side > .side-sec:not(nav):has(form:not([hidden])){grid-column:1 / -1;grid-row:3}
+  #newClassBtn{min-height:40px;padding:0 10px}
+  .head-actions{margin-left:auto}
+  .add-row .btn{padding:0 8px}
+  .card-h{flex-wrap:wrap}
+  .class-list{flex-direction:row;overflow-x:auto;border-top:0}
+  .class-list li{flex:none;border-bottom:0}
+  .class-btn{width:auto;min-width:120px;border-bottom:2px solid transparent}
+  .class-btn[aria-current="true"]{background:transparent;border-bottom-color:var(--ink)}
+  .class-btn[aria-current="true"]::before{display:none}
+  .side-foot{display:none}
+  .new-class{padding:8px 0}
+  .main{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:22px 48px;gap:22px}
+  .head h1{font-size:32px}
+  .seg{margin:8px 12px 0}
+  .seg button{padding:0 10px}
+  .seg button span.lbl{display:none}
+  .seg button[aria-selected="true"] span.lbl{display:inline}
+  .grid > .card:last-child .card-h{padding:14px 16px 0}
+  .gen{padding-left:16px;padding-right:16px}
+  .stage{padding:24px 16px}
+  .fc{aspect-ratio:4/3}
+  .fc-nav{display:grid;grid-template-columns:44px 1fr 1fr 44px;gap:6px;width:100%}
+  .fc-nav .sep{display:none}
+  .fc-nav .btn{white-space:nowrap;padding:0 8px;min-height:44px}
+  .fc-nav .icon-btn{width:44px}
+  .head{position:relative;padding-right:0}
+  .head-t{padding-right:92px}
+  .head-actions{position:absolute;top:0;right:-8px}
+  .head .meta{gap:2px 16px}
+  .fc-tools{justify-content:center}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H19v-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-sum" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="2" y="7" width="15" height="13" rx="2"/><path d="M7 4h13a2 2 0 0 1 2 2v11"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="M8 9h8M8 13h5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-flip" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-files" viewBox="0 0 24 24"><path d="M15 2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7Z"/><path d="M15 2v5h5"/><path d="M2 8v12a2 2 0 0 0 2 2h10"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo"><svg class="i"><use href="#i-book"/></svg></div><b>Study Shelf</b><span class="beta">BETA</span></div>
+    <nav class="side-sec" aria-label="Classes">
+      <div class="label">Classes</div>
+      <ul class="class-list" id="classList"></ul>
+    </nav>
+    <div class="side-sec">
+      <button class="btn quiet" type="button" id="newClassBtn" style="justify-content:flex-start"><svg class="i"><use href="#i-plus"/></svg>New class</button>
+      <form class="new-class" id="addClassForm" hidden>
+        <label for="newClass">Class name</label>
+        <input class="field" id="newClass" placeholder="e.g. Chemistry 201" maxlength="60" autocomplete="off">
+        <div class="row"><button class="btn primary" type="submit" style="flex:1">Add class</button><button class="btn quiet" type="button" id="newClassCancel">Cancel</button></div>
+      </form>
+    </div>
+    <div class="side-foot" id="sideFoot"><svg class="i"><use href="#i-lock"/></svg><span>Your files stay private in this browser on this device.</span></div>
+  </aside>
+
+  <main class="main">
+    <header class="head">
+      <div class="head-t">
+        <div class="eyebrow" id="headIcon"></div>
+        <h1 id="className">Class</h1>
+        <div class="meta" id="classSub"></div>
+      </div>
+      <div class="head-actions">
+        <button class="btn quiet icon-btn" id="renameBtn" type="button" aria-label="Rename class" title="Rename class"><svg class="i"><use href="#i-edit"/></svg></button>
+        <button class="btn quiet icon-btn" id="deleteClassBtn" type="button" aria-label="Delete class" title="Delete class"><svg class="i"><use href="#i-trash"/></svg></button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card" aria-labelledby="matsH">
+        <div class="card-h"><h2 id="matsH">Materials</h2><span class="sub" id="matCount"></span></div>
+        <div class="add-row">
+          <button class="btn soft" type="button" id="pickBtn"><svg class="i"><use href="#i-upload"/></svg>Upload</button>
+          <button class="btn" type="button" id="photoBtn"><svg class="i"><use href="#i-image"/></svg>Photo</button>
+          <button class="btn" type="button" id="pasteBtn"><svg class="i"><use href="#i-note"/></svg>Notes</button>
+          <input type="file" id="fileInput" multiple hidden>
+          <input type="file" id="photoInput" accept="image/*" capture="environment" multiple hidden>
+        </div>
+        <ul class="mats" id="mats"></ul>
+      </section>
+
+      <section class="card" aria-labelledby="toolsH">
+        <div class="card-h"><h2 id="toolsH">Study</h2><span class="sub" id="aiState"></span></div>
+        <div class="seg" role="tablist" id="tabs" aria-label="Study tools">
+          <button role="tab" data-tool="summary"><svg class="i"><use href="#i-sum"/></svg><span class="lbl">Summary</span></button>
+          <button role="tab" data-tool="flashcards"><svg class="i"><use href="#i-cards"/></svg><span class="lbl">Flashcards</span></button>
+          <button role="tab" data-tool="quiz"><svg class="i"><use href="#i-quiz"/></svg><span class="lbl">Quiz</span></button>
+          <button role="tab" data-tool="practice"><svg class="i"><use href="#i-chat"/></svg><span class="lbl">Practice</span></button>
+        </div>
+        <div class="gen">
+          <span class="note" id="genNote"></span>
+          <div style="display:flex;gap:8px">
+            <button class="btn" type="button" id="stopBtn" hidden><svg class="i"><use href="#i-stop"/></svg>Stop</button>
+            <button class="btn primary" type="button" id="genBtn"><svg class="i"><use href="#i-spark"/></svg><span>Generate</span></button>
+          </div>
+        </div>
+        <div class="stage" id="toolBody"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="pasteScrim" hidden>
+  <form class="sheet" id="pasteForm" role="dialog" aria-modal="true" aria-labelledby="pasteH">
+    <h2 id="pasteH">Write or paste notes</h2>
+    <div class="fld"><label for="pasteTitle">Title</label><input class="field" id="pasteTitle" placeholder="Lecture 7 notes" maxlength="100"></div>
+    <div class="fld"><label for="pasteText">Notes</label><textarea class="field" id="pasteText" placeholder="Paste or type your notes here"></textarea></div>
+    <div class="acts"><button class="btn quiet" type="button" id="pasteCancel">Cancel</button><button class="btn primary" type="submit">Save notes</button></div>
+  </form>
+</div>
+<div class="scrim" id="delScrim" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="delH" style="max-width:420px">
+    <h2 id="delH">Delete this class?</h2>
+    <p id="delText"></p>
+    <div class="acts"><button class="btn quiet" type="button" id="cdNo">Keep it</button><button class="btn danger" type="button" id="cdYes">Delete class</button></div>
+  </div>
+</div>
+<div class="scrim" id="imgScrim" hidden>
+  <div class="viewer" role="dialog" aria-modal="true" aria-labelledby="imgName">
+    <div class="viewer-h"><span id="imgName"></span><button class="btn quiet icon-btn" type="button" id="imgClose" aria-label="Close"><svg class="i"><use href="#i-plus" transform="rotate(45 12 12)"/></svg></button></div>
+    <div class="viewer-b" id="imgBody"></div>
+  </div>
+</div>
+<div class="dropzone" id="dropzone" hidden><div><svg class="i"><use href="#i-upload"/></svg><span id="dropLabel">Drop to add to your class</span></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const COLORS = ["c1","c2","c3","c4","c5","c6"];
+const TOOLS = {summary:"Summary", flashcards:"Flashcards", quiz:"Quiz", practice:"Practice questions"};
+const MAX_PROMPT_CHARS = 90000;
+
+/* ---------- example data (clearly marked) ---------- */
+const EX_RESP = `Cellular respiration (Lecture 6)
+
+Big picture: cells break down glucose to make ATP. Overall: C6H12O6 + 6 O2 -> 6 CO2 + 6 H2O + ~30-32 ATP.
+
+1. Glycolysis (cytoplasm)
+- glucose (6C) split into 2 pyruvate (3C)
+- net 2 ATP, 2 NADH
+- does NOT need oxygen
+
+2. Pyruvate oxidation (mitochondrial matrix)
+- each pyruvate -> acetyl-CoA, releases CO2, makes NADH
+
+3. Krebs cycle / citric acid cycle (matrix)
+- acetyl-CoA joins oxaloacetate to make citrate
+- per glucose: 2 ATP, 6 NADH, 2 FADH2, 4 CO2
+
+4. Electron transport chain + chemiosmosis (inner mitochondrial membrane)
+- NADH and FADH2 drop electrons into the chain
+- pumps H+ into intermembrane space -> gradient
+- ATP synthase uses H+ flowing back to make ATP (oxidative phosphorylation)
+- O2 is the final electron acceptor -> forms water
+- this is where most ATP comes from (~26-28)
+
+No oxygen? Fermentation regenerates NAD+ so glycolysis can keep going.
+- lactic acid fermentation (muscle cells)
+- alcohol fermentation (yeast) -> ethanol + CO2
+
+Prof said: know WHERE each stage happens and WHAT each stage makes. Exam 2 is next Thursday.`;
+const EX_PHOTO = `Chapter 8 reading: Photosynthesis
+
+6 CO2 + 6 H2O + light -> C6H12O6 + 6 O2. Happens in chloroplasts.
+
+Light-dependent reactions happen in the thylakoid membranes. Chlorophyll absorbs light, water is split (photolysis), releasing O2. Produces ATP and NADPH.
+
+Calvin cycle (light-independent) happens in the stroma. Uses ATP + NADPH to fix CO2 into sugar. Key enzyme: RuBisCO, which attaches CO2 to RuBP.
+
+Photosynthesis and cellular respiration are roughly opposite processes: one stores energy in glucose, the other releases it.`;
+const EX_HIST = `Reconstruction notes (1865-1877)
+
+13th Amendment (1865): abolished slavery.
+14th Amendment (1868): citizenship + equal protection.
+15th Amendment (1870): voting can't be denied based on race.
+Freedmen's Bureau: helped formerly enslaved people with food, schools, legal help.
+Black Codes: Southern laws restricting freedom of Black Americans.
+Compromise of 1877: federal troops leave the South, Reconstruction ends.`;
+
+const EX_OUT = {
+  summary:{title:"Cellular respiration and photosynthesis",
+    summary:"Cells release the energy stored in glucose through cellular respiration, a four-stage process that produces most of its ATP in the electron transport chain. Photosynthesis is the reverse: chloroplasts use light energy to build glucose from CO2 and water.",
+    keyPoints:["Glycolysis happens in the cytoplasm, needs no oxygen, and nets 2 ATP and 2 NADH per glucose.","The Krebs cycle runs in the mitochondrial matrix and loads NADH and FADH2 with electrons.","The electron transport chain on the inner mitochondrial membrane builds an H+ gradient that ATP synthase uses to make about 26-28 ATP.","Oxygen is the final electron acceptor; without it, fermentation recycles NAD+ so glycolysis can continue.","Photosynthesis: light reactions in the thylakoids make ATP and NADPH; the Calvin cycle in the stroma fixes CO2 into sugar."],
+    terms:[{term:"ATP synthase",def:"Enzyme that uses H+ flowing back across the membrane to make ATP."},{term:"Chemiosmosis",def:"Making ATP using the energy stored in an H+ gradient."},{term:"Fermentation",def:"Anaerobic pathway that regenerates NAD+ (lactic acid or alcohol)."},{term:"RuBisCO",def:"Calvin cycle enzyme that attaches CO2 to RuBP."},{term:"Photolysis",def:"Splitting water in the light reactions, which releases O2."}]},
+  flashcards:{cards:[
+    {front:"Where does glycolysis happen?",back:"In the cytoplasm. It does not need oxygen."},
+    {front:"Net products of glycolysis (per glucose)",back:"2 pyruvate, 2 ATP, 2 NADH"},
+    {front:"Which stage makes the most ATP?",back:"The electron transport chain with chemiosmosis, about 26-28 ATP."},
+    {front:"What is the final electron acceptor?",back:"Oxygen (O2). It combines with H+ and electrons to form water."},
+    {front:"Why does fermentation matter?",back:"It regenerates NAD+ so glycolysis can keep making ATP without oxygen."},
+    {front:"Where does the Calvin cycle occur?",back:"In the stroma of the chloroplast."},
+    {front:"What does RuBisCO do?",back:"Attaches CO2 to RuBP, the first step of carbon fixation."},
+    {front:"Products of the light-dependent reactions",back:"ATP, NADPH, and O2 (from splitting water)."}]},
+  quiz:{questions:[
+    {q:"Where in the cell does the Krebs cycle take place?",choices:["Cytoplasm","Mitochondrial matrix","Inner mitochondrial membrane","Stroma"],answer:1,explain:"The Krebs cycle runs in the matrix. The ETC is on the inner membrane."},
+    {q:"Which molecule is the final electron acceptor in the electron transport chain?",choices:["NAD+","Pyruvate","Oxygen","Carbon dioxide"],answer:2,explain:"O2 accepts electrons at the end of the chain and forms water."},
+    {q:"What is the main purpose of fermentation?",choices:["Make large amounts of ATP","Regenerate NAD+","Produce oxygen","Fix carbon dioxide"],answer:1,explain:"Fermentation recycles NAD+ so glycolysis can continue without oxygen."},
+    {q:"Which process produces O2 during photosynthesis?",choices:["Calvin cycle","Photolysis of water","Glycolysis","Carbon fixation"],answer:1,explain:"Splitting water in the light reactions releases O2."},
+    {q:"Roughly how many ATP does the electron transport chain produce per glucose?",choices:["2","4","26-28","38-40"],answer:2,explain:"Most ATP comes from oxidative phosphorylation, around 26-28."}]},
+  practice:{questions:[
+    {q:"Explain why cells would stop making ATP through glycolysis if NAD+ were not regenerated.",answer:"Glycolysis needs NAD+ to accept electrons. Without the ETC or fermentation recycling NADH back to NAD+, the supply runs out and glycolysis stops."},
+    {q:"Compare where and how ATP is made in glycolysis versus the electron transport chain.",answer:"Glycolysis makes a small amount of ATP in the cytoplasm by substrate-level phosphorylation. The ETC uses an H+ gradient across the inner mitochondrial membrane and ATP synthase (oxidative phosphorylation) to make most of the ATP."},
+    {q:"Describe how photosynthesis and cellular respiration are connected.",answer:"Photosynthesis stores light energy in glucose and releases O2; respiration uses glucose and O2 to release energy as ATP, giving off CO2 and water, which photosynthesis uses again."},
+    {q:"A poison blocks ATP synthase. Predict what happens to the H+ gradient and ATP production.",answer:"H+ keeps getting pumped but can't flow back through ATP synthase, so the gradient builds up and ATP production from oxidative phosphorylation drops sharply."}]}
+};
+
+
+/* ---------- pre-loaded: Islamic Art study guide (Ch. 9) ---------- */
+const IA_KEY = "islamic-art-ch9";
+const IA_TEXT = "Chapter 9 Study Guide: Islamic Art (AP Art History)\n\nBased on your class slides (APAH Chapter 9). ★ = AP 250 work. Each work has bullets on context, function, material, design, and iconography. The key-terms glossary and a quick-review chart are at the end.\n\nISLAM BASICS\n\nFive Pillars of Islam\n1. Profession of faith (Shahada): belief in one God (Allah), with Muhammad as his prophet (monotheism)\n2. Prayer (Salat): five times a day, facing Mecca\n3. Charity (Zakat): give 1/40 of your assets to the poor\n4. Fasting (Sawm): from dawn to dusk during Ramadan\n5. Pilgrimage (Hajj): to Mecca once in a lifetime, if you can afford it\n\nBig ideas in Islamic art: aniconism (no figures in religious spaces) · calligraphy as the highest art · arabesque and geometric pattern, suggesting the infinite nature of God · figures appear in secular court art (palace objects, books).\n\nEARLY ISLAM AND THE EARLY CALIPHATES (c. 610–1000 CE)\n\nIslam began with the Prophet Muhammad (c. 570–632) in Arabia. His move from Mecca to Medina, the Hijra (622 CE), starts the Islamic calendar. After his death, caliphs (successors) led a rapidly growing empire: the Umayyads (661–750, capital Damascus), then the Abbasids (750–1258, Baghdad). A surviving Umayyad prince founded a separate dynasty in Spain (al-Andalus).\n\n★ The Kaaba\nPre-Islamic; rededicated by Muhammad 631–632 CE · Mecca, Saudi Arabia · granite masonry covered with a silk curtain (kiswa) and calligraphy in gold- and silver-wrapped thread\n- Context: Tradition says Abraham and Ishmael built it. Before Islam it held about 360 idols, which Muhammad removed when he rededicated it to the one God (Allah).\n- Function: Islam's holiest site. Muslims everywhere pray toward it (the qibla), and on the Hajj pilgrims circle it seven times counterclockwise (tawaf).\n- Material: A simple granite cube (about 43 ft high) covered by the kiswa, a black silk cloth embroidered with Qur'an verses. The kiswa is replaced every year.\n- Design: Plain and geometric, with no images. The sacred Black Stone is set in a silver frame in the eastern corner. The inside is nearly empty.\n- Remember: Every mihrab in every mosque points toward the Kaaba.\n\n★ Dome of the Rock\n691–692 CE, with renovations · Jerusalem · Umayyad · stone masonry and wooden roof, glazed ceramic tile, mosaics, gilt aluminum and bronze dome\n- Context: Built by the caliph Abd al-Malik on the Temple Mount, a site sacred to Jews, Christians, and Muslims. It claimed Islam's place in a mostly Christian city. It is the oldest surviving major Islamic monument.\n- Function: A shrine, not a mosque. It covers the rock where Abraham prepared to sacrifice his son and where Muhammad is believed to have ascended to heaven on his Night Journey.\n- Design: An octagonal central plan borrowed from Byzantine martyria (compare San Vitale). A golden dome on a drum sits over the rock, with two ambulatories so pilgrims can circle it.\n- Iconography: Aniconic (no people): the interior mosaics show vegetal scrolls, jewels, and crowns, symbols of paradise and victory. A long Kufic inscription holds the earliest dated Qur'an verses, stressing one God and calling Jesus a prophet, a message aimed at Christians.\n- Later changes: The exterior blue tiles were added by the Ottoman sultan Suleiman in the 1500s. The dome is now gold-anodized aluminum.\n\n★ Great Mosque of Córdoba\nc. 785–786 CE, with three later extensions · Córdoba, Spain · Umayyad · stone masonry, about 620 × 460 ft\n- Context: Begun by Abd al-Rahman I, the Umayyad prince who escaped the Abbasids and founded a dynasty in Spain. It was built on the site of a Visigothic church. After the Christian reconquest (1236) it became a cathedral, and a Renaissance church was built in its middle in the 1500s.\n- Function: A congregational mosque for Friday prayer, and a symbol of Umayyad power in the West.\n- Hypostyle hall: A forest of over 600 columns, many reused Roman and Visigothic columns (spolia) of uneven height. Double-tiered arches, with horseshoe arches below and round arches above, raise the ceiling. Striped voussoirs of pale stone and red brick create rhythm and an endless, repeating space.\n- Maqsura (961–976): Added by al-Hakam II: an enclosed area for the caliph near the mihrab, framed by intersecting, multi-lobed arches.\n- Mihrab and dome: The mihrab is a small room behind a horseshoe arch framed in gold mosaics by Byzantine craftsmen. The dome over the mihrab has intersecting ribs forming an eight-pointed star, covered in gold mosaic.\n\n★ Pyxis of al-Mughira\nc. 968 CE · Madinat al-Zahra, Spain · Umayyad · carved ivory\n- Context: Made in the royal workshop for al-Mughira, the 18-year-old son of caliph Abd al-Rahman III, probably as a coming-of-age gift. Its imagery may have reminded him of his claim to the throne, which he never gained; he was killed in 976.\n- Function: A luxury container (pyxis) for perfume, cosmetics, or jewelry.\n- Material: A cylinder of elephant ivory with a domed lid, deeply carved with undercutting and originally inlaid with color.\n- Iconography: Four eight-lobed medallions show courtly life and power: two seated princes with a lute player, lions attacking bulls, and figures taking eggs from eagles' nests (possibly a symbol of claiming Umayyad power). Figures are allowed because it is a secular, not religious, object.\n- Inscription: Kufic script around the lid wishes blessings and good fortune to al-Mughira.\n\n★ Folio from a Qur'an\nc. 8th–9th century CE · Arab, North Africa, or Near East · Abbasid · ink, color, and gold on parchment\n- Context: The Qur'an is believed to be the word of God revealed to Muhammad, so calligraphy became the most honored art in Islam.\n- Function: A page from a Qur'an manuscript used for reading and recitation. Its expense shows devotion.\n- Material: Ink on parchment (animal skin). A full Qur'an needed the skins of hundreds of animals.\n- Design: A horizontal (landscape) page with only a few lines of Kufic script: angular, bold, stretched horizontally. Red dots mark vowels, and gold rosettes mark verse endings.\n- Iconography: Aniconic: no images. The beauty of the writing itself honors God's words.\n\nLATER ISLAMIC ART (c. 1000–1600 CE)\n\nAfter the caliphates broke apart, regional dynasties ruled: the Mamluks (Egypt and Syria), Nasrids (Spain), Seljuks, Ilkhanids (Mongols), Timurids and Safavids (Persia/Iran), and the Ottomans (Turkey). Each built mosques and palaces and made luxury art.\n\n★ Basin (Baptistère de Saint Louis)\nMuhammad ibn al-Zain · c. 1320–1340 CE · Mamluk (Egypt or Syria) · brass inlaid with gold and silver\n- Context: The artist signed it six times, which was unusual. Despite the name, it has no link to King Louis IX. It went to France and was later used to baptize French royal babies (such as Louis XIII in 1601).\n- Function: Probably used at Mamluk court banquets for ceremonial hand-washing.\n- Material: Hammered brass with inlay: thin gold and silver sheets were hammered into carved grooves.\n- Iconography: The outside shows processions of Mamluk court officials and hunting scenes. The inside shows battle and hunting scenes and a bottom filled with fish and sea creatures, as if swimming when the basin was filled with water.\n- Remember: Figural imagery is fine in secular court objects. French coats of arms were added later.\n\n★ Alhambra\n1354–1391 CE · Granada, Spain · Nasrid dynasty · whitewashed adobe stucco, wood, tile, paint, and gilding\n- Context: A palace-fortress of the Nasrids, the last Muslim dynasty in Spain, built under Yusuf I and Muhammad V. Ferdinand and Isabella conquered it in 1492. Its name means \"the red one\" for its red walls.\n- Function: Royal residence, government center, and earthly vision of paradise.\n- Court of the Lions: A garden courtyard with a fountain held up by 12 stone lions. Water channels divide it into four parts (the four rivers of paradise), surrounded by slender columns.\n- Muqarnas domes: The domes in the Hall of the Sisters and Hall of the Abencerrajes are covered in thousands of muqarnas, honeycomb-like stucco cells. Light from windows at their base makes them shimmer, like the dome of heaven.\n- Design: Plain outside, dazzling inside. Walls are covered in carved stucco, tile, arabesques, and poetry inscriptions (by the court poet Ibn Zamrak) that describe the rooms themselves.\n\nTile Mosaic Mihrab, Madrasa Imami\nc. 1354 CE (restored) · Isfahan, Iran · glazed and painted ceramic tile mosaic · 11 ft 3 in × 7 ft 6 in\n- Function: A mihrab: the niche showing the qibla (direction of Mecca) in the prayer hall of a madrasa (religious school).\n- Material: Tile mosaic: thousands of glazed ceramic pieces cut to shape and fitted together like a puzzle.\n- Design: A pointed arch inside nested rectangular frames, in cobalt blue, turquoise, white, yellow, and green, filled with arabesque vines and geometric pattern.\n- Calligraphy: Three scripts: the outer frame in Muhaqqaq (a large cursive script) with Qur'an verses about the duties of believers; the arch in Kufic; and the center with the saying \"The mosque is the house of every pious person.\"\n\nMosque of Selim II (Selimiye Mosque)\nSinan · 1568–1575 CE · Edirne, Turkey · Ottoman · brick and stone · dome 102 ft across; minarets about 295 ft tall\n- Context: Built by Sinan, the Ottoman chief architect (more than 300 buildings), for Sultan Selim II. Sinan considered it his masterpiece.\n- Function: An imperial mosque at the center of a külliye, a complex with schools and a market.\n- Design: One huge central dome, as wide as or wider than Hagia Sophia's, rests on eight piers in an octagon with half-domes in the corners. This creates a single, unified, light-filled space with hundreds of windows.\n- Design: Four very tall, slender minarets mark the corners. Iznik tiles decorate the mihrab area.\n- Remember: Ottomans competed with Hagia Sophia, which they had converted into a mosque after 1453.\n\n★ Great Mosque (Masjid-e Jameh) of Isfahan\nc. 700 CE; additions in the 11th–20th centuries · Isfahan, Iran · Seljuk, Ilkhanid, Timurid, and Safavid dynasties · stone, brick, wood, plaster, and glazed ceramic tile\n- Context: Built and rebuilt by many dynasties over 1,000 years, so it records the history of Persian architecture.\n- Function: The city's main congregational (Friday) mosque.\n- Design: The four-iwan plan: a large central courtyard with an iwan (a tall vaulted hall open on one side) in the middle of each side. The qibla iwan leads to a domed sanctuary with the mihrab.\n- Design: Muqarnas vaults fill the iwans, and colorful Safavid tiles cover the walls. Hypostyle prayer halls fill the spaces between.\n- Remember: It became the model for later Iranian mosques.\n\n★ Bahram Gur Fights the Karg (Great Ilkhanid Shahnama)\nc. 1330–1340 CE · Tabriz, Iran · Ilkhanid (Mongol) · ink, opaque watercolor, gold, and silver on paper\n- Context: The Shahnama (\"Book of Kings\") is the Persian national epic, written by the poet Ferdowsi around 1010. The Mongol Ilkhanids made this lavish copy to present themselves as rightful heirs of Persian kings.\n- Function: An illustrated manuscript for the court. It was later taken apart and its pages sold separately.\n- Iconography: The Sasanian king Bahram Gur kills the karg, a horned, wolf-like monster, with his sword. The scene shows the courage and power of a rightful king.\n- Design: Chinese influence (from Mongol trade): gnarled trees, swirling clouds, and landscape. Text panels sit above and below the picture, and strong diagonals add action.\n\n★ The Court of Gayumars (Shah Tahmasp's Shahnama)\nSultan Muhammad · c. 1522–1525 CE · Tabriz, Iran · Safavid · ink, opaque watercolor, and gold on paper\n- Context: Made for Shah Tahmasp's copy of the Shahnama, one of the most lavish books ever made (258 paintings). It was later given to the Ottoman sultan Selim II as a diplomatic gift.\n- Iconography: Gayumars, the legendary first king of Persia, rules from the mountains. His people wear leopard skins because civilization has just begun. His son and grandson sit near him.\n- Design: Gayumars sits at the top center with his court in a ring around him. The text is a tiny box, so the image dominates. The page has jewel-like colors and incredible detail, including faces hidden in the rocks and many animals.\n- Remember: Sultan Muhammad was a master painter, and it is said to have taken years to complete.\n\n★ Ardabil Carpet\nMaqsud of Kashan · 1539–1540 CE · Safavid Iran · knotted pile of wool and silk · 34 ft 6 in × 17 ft 7 in\n- Context: One of a pair made for the shrine of Shaykh Safi al-Din in Ardabil, ancestor of the Safavid dynasty. One is now in London, the other in Los Angeles.\n- Function: A floor covering for the shrine, and a show of royal piety and wealth.\n- Material: Hand-knotted wool on silk, about 300+ knots per square inch and roughly 25 million knots, which took years to make.\n- Design: A central golden medallion (like a sun or the inside of a dome) with 16 pendants, and two mosque lamps of different sizes. One theory says they look equal from the viewing end. Quarter-medallions fill the corners, with floral arabesques on deep blue.\n- Inscription: A poem by Hafiz (\"I have no refuge in the world other than thy threshold\") and the maker's signature, \"the work of a servant of the court, Maqsud of Kashan\" (dated 946 AH).\n\nKEY TERMS GLOSSARY\n\nReligion and history\n- Allah: God (Arabic)\n- Muhammad: The Prophet of Islam (c. 570–632)\n- Qur'an: Islam's holy book; God's words revealed to Muhammad\n- Hijra: Muhammad's move from Mecca to Medina (622 CE); year 1 of the Islamic calendar (AH)\n- Hajj: Pilgrimage to Mecca\n- Tawaf: Circling the Kaaba seven times during the Hajj\n- Caliph / caliphate: Successor to Muhammad / the state he ruled (Umayyad, Abbasid)\n- Aniconism: Avoiding images of people and animals, especially in religious art\n\nArchitecture\n- Mosque (masjid): Muslim place of prayer\n- Qibla: Direction of Mecca, which Muslims face to pray\n- Qibla wall: Mosque wall facing Mecca\n- Mihrab: Niche in the qibla wall showing the direction of prayer\n- Minbar: Pulpit (stepped platform) for the Friday sermon\n- Minaret: Tower from which the call to prayer is made\n- Maqsura: Enclosed area near the mihrab reserved for the ruler\n- Hypostyle hall: Large hall with a roof held up by many columns (Córdoba)\n- Courtyard (sahn): Open court of a mosque, often with a fountain for washing before prayer\n- Iwan: Tall vaulted hall open on one side (Isfahan)\n- Four-iwan plan: Courtyard with an iwan centered on each side\n- Muqarnas: Honeycomb-like 3-D cells decorating domes and vaults (Alhambra, Isfahan)\n- Horseshoe arch: Arch that curves inward at the bottom like a horseshoe (Córdoba)\n- Voussoirs: Wedge-shaped stones that form an arch\n- Spolia: Reused building parts from older structures\n- Ambulatory: Walkway around a central space (Dome of the Rock)\n- Octagonal / central plan: Building arranged around a center (Dome of the Rock)\n- Madrasa: Islamic religious school\n- Külliye: Ottoman mosque complex with schools, markets, and more\n- Pier: Massive vertical support (Selimiye)\n\nDecoration, writing, and objects\n- Calligraphy: Beautiful handwriting, the most honored Islamic art\n- Kufic: Early, angular, horizontal script (Qur'an folio, Dome of the Rock)\n- Naskh: Rounded, cursive script used for most books\n- Muhaqqaq: Large, elegant cursive script (Madrasa Imami mihrab)\n- Arabesque: Flowing, intertwining vine and floral patterns\n- Geometric pattern: Repeating stars and polygons suggesting infinity\n- Tile mosaic: Pieces of glazed tile cut and fitted into patterns\n- Inlay: Setting one material into grooves in another (gold and silver in brass)\n- Pyxis: Small lidded box\n- Folio: Single page of a manuscript\n- Parchment: Writing surface made from animal skin\n- Illuminated manuscript: Hand-made book decorated with color and gold\n- Shahnama: \"Book of Kings,\" the Persian epic by Ferdowsi\n- Kiswa: Black silk cloth covering the Kaaba\n- Knotted pile: Carpet technique of tying yarn knots that are then trimmed\n\nQUICK REVIEW CHART (Work · Dynasty · Date CE · Place)\n- Kaaba · Pre-Islamic / Muhammad · rededicated 631–632 · Mecca\n- Dome of the Rock · Umayyad · 691–692 · Jerusalem\n- Great Mosque of Córdoba · Umayyad (Spain) · 785–786+ · Córdoba, Spain\n- Pyxis of al-Mughira · Umayyad (Spain) · c. 968 · Spain\n- Folio from a Qur'an · Abbasid · 8th–9th c. · Near East / N. Africa\n- Basin (Baptistère) · Mamluk · c. 1320–1340 · Egypt/Syria\n- Alhambra · Nasrid · 1354–1391 · Granada, Spain\n- Mihrab, Madrasa Imami · Persian · c. 1354 · Isfahan, Iran\n- Mosque of Selim II · Ottoman (Sinan) · 1568–1575 · Edirne, Turkey\n- Great Mosque of Isfahan · Seljuk → Safavid · c. 700 onward · Isfahan, Iran\n- Bahram Gur Fights the Karg · Ilkhanid (Mongol) · c. 1330–1340 · Tabriz, Iran\n- Court of Gayumars · Safavid · c. 1522–1525 · Tabriz, Iran\n- Ardabil Carpet · Safavid · 1539–1540 · Ardabil, Iran\n\nBIG COMPARISONS TO KNOW\n- Mosque plans: Hypostyle (Córdoba) → four-iwan (Isfahan) → central dome (Selimiye)\n- Borrowing from Byzantium: Dome of the Rock (octagon like San Vitale, Byzantine-style mosaics); Córdoba's mihrab mosaics by Byzantine artists; Selimiye competing with Hagia Sophia\n- Sacred vs. secular: Religious works are aniconic (Kaaba, Dome of the Rock, Qur'an folio, mihrab); court works show figures (pyxis, basin, Shahnama pages)\n- Paradise imagery: Dome of the Rock's jeweled vines, Alhambra's four-part garden and starry muqarnas, Ardabil's dome-like medallion\n- Art as power: Dome of the Rock (Islam in Jerusalem), the pyxis (succession), the Ilkhanid and Safavid Shahnamas (rulers as heirs of Persian kings)\n- Calligraphy: Kufic (Qur'an folio, Dome of the Rock, pyxis) vs. cursive Muhaqqaq and Naskh (Madrasa Imami mihrab); poetry (Alhambra, Ardabil)\n";
+const IA_OUT = {"summary": {"title": "Islamic Art, c. 610–1600 CE (AP Art History Ch. 9)", "summary": "Islamic art grows out of the faith founded by the Prophet Muhammad and spreads with the Umayyad and Abbasid caliphates, then with regional dynasties from Spain to Iran and Turkey. Religious art is aniconic, so it relies on calligraphy (the most honored art), arabesque, and geometric pattern to suggest the infinite nature of God, while secular court objects and books freely show people and animals. Mosque design moves from the hypostyle hall (Córdoba) to the four-iwan plan (Isfahan) to the single central dome (Selimiye), and many works borrow from Byzantium or compete with it. Again and again, art expresses paradise and the power of the rulers who paid for it.", "keyPoints": ["Five Pillars: profession of faith (Shahada), prayer five times a day facing Mecca (Salat), charity of 1/40 of assets (Zakat), fasting in Ramadan (Sawm), and pilgrimage to Mecca (Hajj).", "Sacred vs. secular: religious works (Kaaba, Dome of the Rock, Qur'an folio, mihrabs) are aniconic; court works (Pyxis of al-Mughira, Baptistère basin, Shahnama pages) show figures.", "Mosque plans evolve: hypostyle hall at Córdoba, four-iwan plan at Isfahan, and a single huge central dome at Sinan's Selimiye Mosque.", "Borrowing from Byzantium: the Dome of the Rock's octagonal plan (like San Vitale) and mosaics, Byzantine craftsmen on Córdoba's mihrab, and the Selimiye competing with Hagia Sophia.", "Calligraphy is the highest art because the Qur'an is God's word: angular Kufic (Qur'an folio, Dome of the Rock, pyxis) vs. cursive Muhaqqaq and Naskh (Madrasa Imami mihrab).", "Paradise imagery: the Dome of the Rock's jeweled vines, the Alhambra's four-part Court of the Lions and starry muqarnas domes, and the Ardabil Carpet's dome-like medallion.", "Art as power: the Dome of the Rock claims Jerusalem for Islam, the pyxis reminds a prince of his claim to the throne, and the Ilkhanid and Safavid Shahnamas present rulers as heirs of Persian kings.", "Key dynasties: Umayyad (Damascus, then Spain), Abbasid (Baghdad), Mamluk (Egypt/Syria), Nasrid (Granada), Ilkhanid (Mongol Iran), Safavid (Iran), and Ottoman (Turkey)."], "terms": [{"term": "Aniconism", "def": "Avoiding images of people and animals, especially in religious art."}, {"term": "Qibla", "def": "The direction of Mecca, which Muslims face to pray."}, {"term": "Mihrab", "def": "Niche in the qibla wall showing the direction of prayer."}, {"term": "Hypostyle hall", "def": "Large hall with a roof held up by many columns (Córdoba)."}, {"term": "Iwan", "def": "Tall vaulted hall open on one side; four around a courtyard make the four-iwan plan (Isfahan)."}, {"term": "Muqarnas", "def": "Honeycomb-like 3-D cells decorating domes and vaults (Alhambra, Isfahan)."}, {"term": "Kufic", "def": "Early, angular, horizontal script (Qur'an folio, Dome of the Rock)."}, {"term": "Arabesque", "def": "Flowing, intertwining vine and floral patterns."}, {"term": "Spolia", "def": "Reused building parts from older structures (Córdoba's columns)."}, {"term": "Shahnama", "def": "\"Book of Kings,\" the Persian epic by Ferdowsi."}]}, "flashcards": {"cards": [{"front": "The Kaaba: date, place, material", "back": "Pre-Islamic; rededicated by Muhammad 631–632 CE · Mecca · granite masonry covered with the kiswa (silk curtain with gold- and silver-thread calligraphy)"}, {"front": "Who does tradition say built the Kaaba, and what did Muhammad remove from it?", "back": "Abraham and Ishmael. Muhammad removed about 360 idols and rededicated it to the one God."}, {"front": "What is tawaf?", "back": "Circling the Kaaba seven times counterclockwise during the Hajj."}, {"front": "What is the kiswa?", "back": "The black silk cloth embroidered with Qur'an verses that covers the Kaaba. It is replaced every year."}, {"front": "Dome of the Rock: date, place, dynasty", "back": "691–692 CE · Jerusalem · Umayyad (built by caliph Abd al-Malik)"}, {"front": "Is the Dome of the Rock a mosque?", "back": "No. It is a shrine over the rock where Abraham prepared to sacrifice his son and where Muhammad ascended to heaven on the Night Journey."}, {"front": "Where does the Dome of the Rock's octagonal plan come from?", "back": "Byzantine martyria (compare San Vitale). Two ambulatories let pilgrims circle the rock."}, {"front": "What does the Dome of the Rock's Kufic inscription say?", "back": "The earliest dated Qur'an verses, stressing one God and calling Jesus a prophet, a message aimed at Christians."}, {"front": "Who added the Dome of the Rock's blue exterior tiles?", "back": "The Ottoman sultan Suleiman, in the 1500s."}, {"front": "Great Mosque of Córdoba: date, place, founder", "back": "c. 785–786 CE (three later extensions) · Córdoba, Spain · begun by Abd al-Rahman I, the Umayyad prince who escaped the Abbasids"}, {"front": "Describe Córdoba's hypostyle hall", "back": "Over 600 columns (many Roman and Visigothic spolia), double-tiered arches with horseshoe arches below and round arches above, and striped red-and-white voussoirs."}, {"front": "What is Córdoba's maqsura, and who added it?", "back": "An enclosed area for the caliph near the mihrab, framed by intersecting multi-lobed arches. Added by al-Hakam II (961–976)."}, {"front": "Describe the dome over Córdoba's mihrab", "back": "Intersecting ribs forming an eight-pointed star, covered in gold mosaic by Byzantine craftsmen."}, {"front": "What happened to Córdoba's mosque after 1236?", "back": "After the Christian reconquest it became a cathedral, and a Renaissance church was built in its middle in the 1500s."}, {"front": "Pyxis of al-Mughira: date, place, material", "back": "c. 968 CE · Madinat al-Zahra, Spain · Umayyad · carved elephant ivory"}, {"front": "Who was the Pyxis of al-Mughira made for, and why?", "back": "al-Mughira, the 18-year-old son of caliph Abd al-Rahman III, probably as a coming-of-age gift that reminded him of his claim to the throne."}, {"front": "Why can the pyxis show people and animals?", "back": "It is a secular court object, not a religious one."}, {"front": "What might the eggs taken from eagles' nests on the pyxis symbolize?", "back": "Claiming Umayyad power (al-Mughira's claim to the throne)."}, {"front": "Folio from a Qur'an: date, dynasty, material", "back": "c. 8th–9th century CE · Abbasid · ink, color, and gold on parchment"}, {"front": "Describe the script on the Qur'an folio", "back": "Kufic: angular, bold, and stretched horizontally, a few lines on a landscape page. Red dots mark vowels and gold rosettes mark verse endings."}, {"front": "Why is calligraphy the most honored Islamic art?", "back": "The Qur'an is believed to be the word of God, so writing it beautifully honors God."}, {"front": "Basin (Baptistère de Saint Louis): artist, date, dynasty, material", "back": "Muhammad ibn al-Zain · c. 1320–1340 CE · Mamluk (Egypt or Syria) · brass inlaid with gold and silver"}, {"front": "What was the Baptistère basin used for?", "back": "Probably ceremonial hand-washing at Mamluk court banquets. Later it was used in France to baptize royal babies (Louis XIII in 1601)."}, {"front": "What is unusual about the Baptistère's signature?", "back": "Muhammad ibn al-Zain signed it six times. It has no real link to King Louis IX."}, {"front": "Alhambra: date, place, dynasty", "back": "1354–1391 CE · Granada, Spain · Nasrid, the last Muslim dynasty in Spain (conquered by Ferdinand and Isabella in 1492)"}, {"front": "Court of the Lions", "back": "Alhambra garden courtyard with a fountain held up by 12 stone lions. Water channels divide it into four parts, the four rivers of paradise."}, {"front": "Where are the Alhambra's famous muqarnas domes?", "back": "The Hall of the Sisters and the Hall of the Abencerrajes. Light from windows at the base makes them shimmer like the dome of heaven."}, {"front": "What does \"Alhambra\" mean?", "back": "\"The red one,\" for its red walls."}, {"front": "Mihrab, Madrasa Imami: date, place, material", "back": "c. 1354 CE · Isfahan, Iran · glazed ceramic tile mosaic, cut and fitted like a puzzle"}, {"front": "Three scripts on the Madrasa Imami mihrab", "back": "Muhaqqaq on the outer frame (Qur'an verses), Kufic on the arch, and the center saying \"The mosque is the house of every pious person.\""}, {"front": "Mosque of Selim II: architect, date, place", "back": "Sinan · 1568–1575 CE · Edirne, Turkey · Ottoman"}, {"front": "Describe the Selimiye's structure", "back": "One huge central dome (102 ft, as wide as Hagia Sophia's) on eight piers in an octagon, with corner half-domes, four very tall minarets, and Iznik tiles."}, {"front": "What is a külliye?", "back": "An Ottoman mosque complex with schools, a market, and more (the Selimiye sits at the center of one)."}, {"front": "Great Mosque of Isfahan: date and dynasties", "back": "c. 700 CE with additions from the 11th–20th centuries · Seljuk, Ilkhanid, Timurid, and Safavid"}, {"front": "What plan does the Great Mosque of Isfahan use?", "back": "The four-iwan plan: a central courtyard with an iwan centered on each side. The qibla iwan leads to the domed sanctuary."}, {"front": "Bahram Gur Fights the Karg: date, place, dynasty", "back": "c. 1330–1340 CE · Tabriz, Iran · Ilkhanid (Mongol), from the Great Ilkhanid Shahnama"}, {"front": "What shows Chinese influence in Bahram Gur Fights the Karg?", "back": "Gnarled trees, swirling clouds, and landscape, which came through Mongol trade."}, {"front": "Why did the Mongol Ilkhanids make a Shahnama?", "back": "To present themselves as rightful heirs of the Persian kings."}, {"front": "The Court of Gayumars: artist, date, dynasty", "back": "Sultan Muhammad · c. 1522–1525 CE · Tabriz, Iran · Safavid (from Shah Tahmasp's Shahnama)"}, {"front": "Who is Gayumars, and why do his people wear leopard skins?", "back": "The legendary first king of Persia. Civilization has just begun."}, {"front": "Ardabil Carpet: maker, date, material", "back": "Maqsud of Kashan · 1539–1540 CE · Safavid Iran · knotted pile of wool and silk (about 25 million knots)"}, {"front": "Describe the Ardabil Carpet's design", "back": "A central golden medallion with 16 pendants, two mosque lamps of different sizes, corner quarter-medallions, and floral arabesques on deep blue."}, {"front": "What poem is on the Ardabil Carpet?", "back": "A poem by Hafiz: \"I have no refuge in the world other than thy threshold.\""}, {"front": "Hijra", "back": "Muhammad's move from Mecca to Medina in 622 CE, year 1 of the Islamic calendar (AH)."}, {"front": "Minbar vs. minaret", "back": "Minbar: stepped pulpit for the Friday sermon. Minaret: tower for the call to prayer."}, {"front": "Naskh vs. Kufic", "back": "Naskh is a rounded cursive script used for most books. Kufic is early, angular, and horizontal."}]}, "quiz": {"questions": [{"q": "Which work is a shrine rather than a mosque, built over a rock sacred to Jews, Christians, and Muslims?", "choices": ["Great Mosque of Córdoba", "Dome of the Rock", "Great Mosque of Isfahan", "Mosque of Selim II"], "answer": 1, "explain": "The Dome of the Rock covers the rock of Abraham's sacrifice and Muhammad's Night Journey."}, {"q": "The Dome of the Rock's octagonal central plan was borrowed from which tradition?", "choices": ["Persian palaces", "Roman basilicas", "Byzantine martyria", "Chinese pagodas"], "answer": 2, "explain": "Its plan follows Byzantine martyria, like San Vitale."}, {"q": "What does the hypostyle hall of the Great Mosque of Córdoba use to raise its ceiling?", "choices": ["Double-tiered arches, horseshoe below and round above", "A single central dome on eight piers", "Four iwans around a courtyard", "Flying buttresses"], "answer": 0, "explain": "Stacked horseshoe and round arches with striped voussoirs lift the roof over 600+ columns."}, {"q": "Many of Córdoba's columns are spolia. What does that mean?", "choices": ["They are carved from ivory", "They were reused from older Roman and Visigothic buildings", "They were added after the reconquest", "They are covered in gold mosaic"], "answer": 1, "explain": "Spolia are reused building parts, which is why the columns are of uneven height."}, {"q": "Why can the Pyxis of al-Mughira show people and animals?", "choices": ["It was made by Christian artists", "It was made before Islam", "It is a secular court object, not a religious one", "Figures were allowed in all Umayyad art"], "answer": 2, "explain": "Aniconism applies to religious art; secular court objects could show figures."}, {"q": "What script appears on the Folio from a Qur'an (8th–9th c.)?", "choices": ["Naskh", "Muhaqqaq", "Latin capitals", "Kufic"], "answer": 3, "explain": "The folio uses angular, horizontally stretched Kufic, with red dots for vowels."}, {"q": "The Basin (Baptistère de Saint Louis) was made by Muhammad ibn al-Zain under which dynasty?", "choices": ["Mamluk", "Nasrid", "Safavid", "Abbasid"], "answer": 0, "explain": "It is Mamluk brass inlaid with gold and silver, c. 1320–1340."}, {"q": "In the Alhambra's Court of the Lions, what do the four water channels represent?", "choices": ["The four caliphs", "The four rivers of paradise", "The four directions of prayer", "The four Nasrid kings"], "answer": 1, "explain": "The four-part garden is an earthly vision of paradise."}, {"q": "The honeycomb-like stucco cells in the Alhambra's Hall of the Sisters are called:", "choices": ["Voussoirs", "Arabesques", "Muqarnas", "Iwans"], "answer": 2, "explain": "Muqarnas domes shimmer in light like the dome of heaven."}, {"q": "Which work uses the four-iwan plan?", "choices": ["Dome of the Rock", "Great Mosque of Córdoba", "Alhambra", "Great Mosque of Isfahan"], "answer": 3, "explain": "Isfahan has an iwan centered on each side of its courtyard and became the model for later Iranian mosques."}, {"q": "Sinan's Mosque of Selim II was designed to compete with which building?", "choices": ["Hagia Sophia", "The Kaaba", "The Pantheon", "The Great Mosque of Córdoba"], "answer": 0, "explain": "Its central dome is as wide as or wider than Hagia Sophia's."}, {"q": "The Madrasa Imami mihrab's outer frame uses which script?", "choices": ["Kufic", "Muhaqqaq", "Naskh only", "No script; only geometric pattern"], "answer": 1, "explain": "Muhaqqaq frames the mihrab; Kufic is on the arch."}, {"q": "What does a mihrab show?", "choices": ["Where the ruler sits", "Where the sermon is given", "The qibla, the direction of Mecca", "The burial place of a saint"], "answer": 2, "explain": "Every mihrab points toward the Kaaba in Mecca."}, {"q": "Gnarled trees and swirling clouds in Bahram Gur Fights the Karg show the influence of:", "choices": ["Byzantine mosaics", "Roman wall painting", "Ottoman tilework", "Chinese art, through Mongol trade"], "answer": 3, "explain": "The Ilkhanids were Mongols, linked by trade to China."}, {"q": "In The Court of Gayumars, why do the figures wear leopard skins?", "choices": ["Civilization has just begun under the first king of Persia", "They are hunters returning from a hunt", "Leopard skins were Safavid royal dress", "They are Mongol invaders"], "answer": 0, "explain": "Gayumars is the legendary first king, ruling at the dawn of civilization."}, {"q": "The Ardabil Carpet was made for:", "choices": ["The Topkapi Palace", "The shrine of Shaykh Safi al-Din, ancestor of the Safavids", "The Great Mosque of Isfahan", "A Mamluk banquet hall"], "answer": 1, "explain": "One of a pair for the Ardabil shrine; one is now in London, the other in Los Angeles."}, {"q": "Why might the two mosque lamps on the Ardabil Carpet be different sizes?", "choices": ["The weaver made a mistake", "They show two different mosques", "So they look equal from the viewing end", "One lamp was added later"], "answer": 2, "explain": "One theory says the size difference corrects for perspective from the viewing end."}, {"q": "Which order shows the development of mosque plans in this chapter?", "choices": ["Central dome → four-iwan → hypostyle", "Four-iwan → hypostyle → central dome", "Hypostyle → central dome → four-iwan", "Hypostyle → four-iwan → central dome"], "answer": 3, "explain": "Córdoba (hypostyle) → Isfahan (four-iwan) → Selimiye (central dome)."}, {"q": "Which pair are BOTH aniconic religious works?", "choices": ["Kaaba and Folio from a Qur'an", "Pyxis of al-Mughira and Dome of the Rock", "Baptistère basin and Madrasa Imami mihrab", "Court of Gayumars and Kaaba"], "answer": 0, "explain": "The pyxis, basin, and Shahnama pages are secular and show figures."}, {"q": "Which of the Five Pillars is Zakat?", "choices": ["Prayer five times a day", "Charity of 1/40 of your assets", "Fasting during Ramadan", "Pilgrimage to Mecca"], "answer": 1, "explain": "Zakat is charity to the poor."}]}, "practice": {"questions": [{"q": "Compare how the Dome of the Rock and the Pyxis of al-Mughira use art to express power.", "answer": "The Dome of the Rock claims Islam's place in Jerusalem, a mostly Christian city, by building a golden-domed shrine on the Temple Mount with Kufic inscriptions aimed at Christians. The pyxis expresses dynastic power on a personal scale: its courtly scenes and eggs taken from eagles' nests remind al-Mughira of his claim to the Umayyad throne. One is public and religious, the other private and secular, but both serve Umayyad authority."}, {"q": "Explain why some Islamic works show people and animals while others do not. Use at least two works on each side.", "answer": "Religious art is aniconic, avoiding figures so worship focuses on God; the Kaaba, the Qur'an folio, and the Madrasa Imami mihrab use calligraphy and pattern instead. Secular court art had no such limit, so the Pyxis of al-Mughira, the Baptistère basin, and the Shahnama pages show princes, hunters, animals, and battles."}, {"q": "Trace how mosque design changes from the Great Mosque of Córdoba to the Great Mosque of Isfahan to the Mosque of Selim II.", "answer": "Córdoba is a hypostyle hall: a forest of columns and double arches making an endless, repeating space. Isfahan uses the four-iwan plan, organizing space around a courtyard with four vaulted halls. Sinan's Selimiye unifies everything under one huge central dome on eight piers, creating a single light-filled space that rivals Hagia Sophia."}, {"q": "Describe how Islamic artists borrowed from or responded to Byzantine art. Give three examples.", "answer": "The Dome of the Rock adopts the octagonal central plan of Byzantine martyria like San Vitale, along with Byzantine-style mosaics. Byzantine craftsmen made the gold mosaics around Córdoba's mihrab. The Ottoman Selimiye Mosque was built to match or exceed the dome of Hagia Sophia, which the Ottomans had converted to a mosque."}, {"q": "How do the Alhambra, the Dome of the Rock, and the Ardabil Carpet each create an image of paradise?", "answer": "The Dome of the Rock's mosaics fill the interior with jeweled vines, crowns, and vegetation. The Alhambra's Court of the Lions divides a garden into four parts like the four rivers of paradise, and its muqarnas domes glow like the dome of heaven. The Ardabil Carpet's golden medallion reads like a sun or the inside of a dome, surrounded by flowering arabesques."}, {"q": "Why is calligraphy the most honored art in Islam? Compare how it appears on the Qur'an folio and the Madrasa Imami mihrab.", "answer": "Because the Qur'an is believed to be the word of God, writing it beautifully is an act of devotion. The Qur'an folio uses a few lines of bold, horizontal Kufic on parchment with red vowel dots and gold rosettes. The mihrab combines three scripts in tile mosaic: cursive Muhaqqaq on the frame, Kufic on the arch, and a saying in the center."}, {"q": "Compare the two Shahnama paintings, Bahram Gur Fights the Karg and The Court of Gayumars, in style and purpose.", "answer": "Both illustrate Ferdowsi's Persian epic to present rulers (Ilkhanid Mongols and Safavid Shah Tahmasp) as heirs of Persian kings. Bahram Gur uses strong diagonals, Chinese-style trees and clouds, and text panels above and below. The Court of Gayumars shrinks the text to a tiny box so the jewel-colored image dominates, with the king at top center and his court in a ring."}, {"q": "The Great Mosque of Córdoba and the Baptistère de Saint Louis both ended up in Christian hands. Explain how each was reused and what that shows.", "answer": "After the 1236 reconquest, Córdoba's mosque became a cathedral and a Renaissance church was built inside it. The Mamluk basin went to France, gained French coats of arms, and was used to baptize royal babies like Louis XIII. Both show how admired Islamic works were adapted to new religious and political uses."}]}};
+function addIslamic(st){
+  st.preloaded ||= [];
+  if (st.preloaded.includes(IA_KEY)) return false;
+  st.preloaded.push(IA_KEY);
+  const id = uid(), now = Date.now();
+  st.classes.unshift({id, name:"Islamic Art", color:"c4"});
+  st.materials.push({id:uid(), classId:id, name:"Ch. 9 Islamic Art Study Guide (AP Art History)", type:"DOC", kind:"text", text:IA_TEXT, size:IA_TEXT.length, added:now, use:true});
+  st.outputs ||= {};
+  st.outputs[id] = Object.fromEntries(Object.entries(IA_OUT).map(([k, d]) => [k, {data:d, from:1, at:now}]));
+  st.active = id; st.tool = "flashcards";
+  return true;
+}
+function seed(){
+  const bio = uid(), hist = uid(), calc = uid();
+  const m1 = uid(), m2 = uid();
+  const now = Date.now();
+  return {
+    v:1, active:bio,
+    classes:[
+      {id:bio, name:"Biology 101", color:"c2"},
+      {id:hist, name:"US History", color:"c3"},
+      {id:calc, name:"Calculus I", color:"c1"}],
+    materials:[
+      {id:m1, classId:bio, name:"Lecture 6 - Cellular respiration", type:"NOTE", kind:"text", text:EX_RESP, size:EX_RESP.length, added:now-86400000*2, example:true, use:true},
+      {id:m2, classId:bio, name:"Ch. 8 reading - Photosynthesis.pdf", type:"PDF", kind:"text", text:EX_PHOTO, size:EX_PHOTO.length, pages:3, added:now-86400000, example:true, use:true},
+      {id:uid(), classId:hist, name:"Reconstruction notes", type:"NOTE", kind:"text", text:EX_HIST, size:EX_HIST.length, added:now-3600000*5, example:true, use:true}],
+    outputs:{[bio]:{summary:{data:EX_OUT.summary,example:true,from:2}, flashcards:{data:EX_OUT.flashcards,example:true,from:2}, quiz:{data:EX_OUT.quiz,example:true,from:2}, practice:{data:EX_OUT.practice,example:true,from:2}}},
+    tool:"flashcards"
+  };
+}
+function seedWithPreloads(){ const s = seed(); addIslamic(s); return s; }
+
+/* ---------- storage: IndexedDB in this browser, memory fallback ---------- */
+const store = (() => {
+  let dbp = null;
+  function open(){
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open("study-shelf", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("kv");
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  return {
+    async get(k){ try { const db = await open(); return await new Promise((res, rej) => { const t = db.transaction("kv").objectStore("kv").get(k); t.onsuccess = () => res(t.result); t.onerror = () => rej(t.error); }); } catch { return undefined; } },
+    async set(k, v){ try { const db = await open(); await new Promise((res, rej) => { const t = db.transaction("kv","readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch { return false; } }
+  };
+})();
+
+let S = seedWithPreloads();
+let saveTimer = null, persistOK = true;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    persistOK = await store.set("state", S);
+    if (!persistOK) $("sideFoot").textContent = "This browser isn't letting the page save, so uploads last until you close it.";
+  }, 250);
+}
+
+/* ---------- UI state ---------- */
+const ui = {fc:{i:0, flip:false, known:new Set(), learning:new Set()}, quiz:{}, practice:{}, busy:false, ctl:null, err:null, partial:"", pasteOpen:false, confirmDel:false};
+let sampleMaxImages = 8; let sample = null, sampleImages = false, aiChecked = false;
+
+const cls = () => S.classes.find(c => c.id === S.active) || S.classes[0];
+const matsOf = id => S.materials.filter(m => m.classId === id).sort((a, b) => b.added - a.added);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); }
+function fmtSize(n){ return n < 1024 ? n + " B" : n < 1048576 ? (n/1024).toFixed(0) + " KB" : (n/1048576).toFixed(1) + " MB"; }
+function ago(t){ const d = (Date.now() - t)/1000; if (d < 60) return "just now"; if (d < 3600) return Math.floor(d/60) + " min ago"; if (d < 86400) return Math.floor(d/3600) + " h ago"; return Math.floor(d/86400) + " d ago"; }
+
+
+/* ---------- render ---------- */
+const ico = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const TOOL_ICON = {summary:"sum", flashcards:"cards", quiz:"quiz", practice:"chat"};
+function courseCode(name){ return name.trim().split(/\s+/).map(w => /^\d|^[IVX]+$/.test(w) ? w : w.slice(0, 4)).join(" ").toUpperCase().slice(0, 12); }
+function paintIcon(el, c){ el.textContent = courseCode(c.name); }
+
+function renderClasses(){
+  const ul = $("classList"); ul.innerHTML = "";
+  for (const c of S.classes){
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.className = "class-btn"; b.type = "button";
+    b.setAttribute("aria-current", c.id === S.active ? "true" : "false");
+    b.innerHTML = `<span class="cicon"></span><span class="nm"></span><span class="count">${matsOf(c.id).length}</span>`;
+    paintIcon(b.querySelector(".cicon"), c);
+    b.querySelector(".nm").textContent = c.name;
+    b.onclick = () => { S.active = c.id; resetToolUI(); save(); render(); };
+    li.appendChild(b); ul.appendChild(li);
+  }
+}
+function renderHead(){
+  const c = cls(); if (!c) return;
+  $("className").textContent = c.name;
+  paintIcon($("headIcon"), c);
+  const ms = matsOf(c.id); const out = S.outputs[c.id] || {};
+  const made = Object.keys(TOOLS).filter(k => out[k]).length;
+  $("classSub").innerHTML = `<span><b>${ms.length}</b> material${ms.length === 1 ? "" : "s"}</span><span><b>${made}/4</b> study tools ready</span>`;
+}
+const usable = m => m.kind === "text" ? !!m.text.trim() : m.kind === "image" ? !!m.img : false;
+function selected(){ return matsOf(cls().id).filter(m => m.use && usable(m)); }
+
+function renderMats(){
+  const c = cls(); const ms = matsOf(c.id); const ul = $("mats");
+  $("matCount").textContent = ms.length ? `${ms.filter(m => m.use && usable(m)).length} of ${ms.length} in use` : "";
+  ul.innerHTML = "";
+  if (!ms.length){
+    ul.innerHTML = `<li class="drop-hint"><span class="ring">${ico("upload")}</span><b>Add your first material</b><span>Drop files anywhere on this page: PDFs, Word docs, slides, photos of notes or text files.</span></li>`;
+    return;
+  }
+  for (const m of ms){
+    const li = document.createElement("li"); const ok = usable(m);
+    li.className = "mat" + (m.use && ok ? "" : " off");
+    const chk = document.createElement("label"); chk.className = "check";
+    chk.innerHTML = `<input type="checkbox"><span>${ico("check")}</span>`;
+    const cb = chk.querySelector("input"); cb.checked = !!m.use && ok; cb.disabled = !ok;
+    cb.setAttribute("aria-label", (ok ? "Use " : "Can't read ") + m.name);
+    cb.onchange = () => { m.use = cb.checked; save(); renderMats(); renderGenBar(); };
+    let icon = document.createElement("div"); icon.className = "ficon";
+    if (m.kind === "image" && m.img){
+      icon = document.createElement("button"); icon.type = "button"; icon.className = "ficon pic"; icon.setAttribute("aria-label", "View " + m.name);
+      const im = document.createElement("img"); im.src = m.img; im.alt = ""; icon.appendChild(im);
+      if (m.imgs?.length > 1){ const nn = document.createElement("span"); nn.className = "n"; nn.textContent = m.imgs.length; icon.appendChild(nn); }
+      icon.onclick = () => viewImages(m);
+    }
+    else { const t = (m.type || "FILE"); icon.classList.add({PDF:"pdf", DOC:"doc", DOCX:"doc", PPT:"ppt", PPTX:"ppt", NOTE:"note"}[t] || "x"); icon.textContent = t === "NOTE" ? "" : t; if (t === "NOTE") icon.innerHTML = ico("note"); }
+    const info = document.createElement("div"); info.className = "info";
+    const t = document.createElement("div"); t.className = "t"; t.textContent = m.name; t.title = m.name;
+    const bits = [];
+    if (m.example) bits.push(`<span class="pill ex">Example</span>`);
+    if (m.kind === "file") bits.push(`<span class="pill warn">Can't read yet</span>`);
+    if (m.pages && !m.scanned) bits.push(`${m.pages} ${m.type === "PPT" ? "slide" : "page"}${m.pages === 1 ? "" : "s"}`);
+    else if (m.kind === "text") bits.push(`${m.text.split(/\s+/).filter(Boolean).length.toLocaleString()} words`);
+    if (m.kind === "image") bits.push(m.scanned ? `Scanned, ${m.imgs.length} page${m.imgs.length === 1 ? "" : "s"} as images` : "Photo");
+    bits.push(ago(m.added));
+    const meta = document.createElement("div"); meta.className = "m";
+    meta.innerHTML = bits.map((b, i) => (i && !bits[i-1].startsWith("<span") ? `<span class="dot"></span>` : "") + b).join("");
+    info.append(t, meta);
+    const del = document.createElement("button"); del.className = "btn quiet icon-btn rm"; del.type = "button";
+    del.innerHTML = ico("trash"); del.setAttribute("aria-label", "Remove " + m.name); del.title = "Remove";
+    del.onclick = () => { S.materials = S.materials.filter(x => x.id !== m.id); save(); render(); toast("Removed " + m.name); };
+    li.append(chk, icon, info, del); ul.appendChild(li);
+  }
+}
+
+function renderTabs(){
+  const out = S.outputs[cls().id] || {};
+  for (const b of $("tabs").querySelectorAll("button")){
+    const on = b.dataset.tool === S.tool;
+    b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1;
+    b.querySelector(".done")?.remove();
+    if (out[b.dataset.tool]) { const d = document.createElement("span"); d.className = "done"; d.setAttribute("aria-label", "ready"); b.appendChild(d); }
+    b.onclick = () => { S.tool = b.dataset.tool; ui.err = null; save(); renderTabs(); renderGenBar(); renderTool(); };
+  }
+}
+function renderGenBar(){
+  const sel = selected(); const out = (S.outputs[cls().id] || {})[S.tool]; const n = sel.length;
+  const btn = $("genBtn");
+  btn.disabled = ui.busy || !n;
+  btn.querySelector("span").textContent = ui.busy ? "Generating..." : out ? "Regenerate" : "Generate " + TOOLS[S.tool].toLowerCase();
+  $("stopBtn").hidden = !ui.busy;
+  $("genNote").innerHTML = n ? `Using <b>${n}</b> material${n === 1 ? "" : "s"}` : "Select a material to start";
+  $("aiState").textContent = !aiChecked ? "" : sample ? "Powered by Claude" : "Preview mode";
+}
+function renderTool(){
+  const body = $("toolBody"); const c = cls(); const out = (S.outputs[c.id] || {})[S.tool];
+  body.innerHTML = "";
+  if (ui.err){ const e = document.createElement("div"); e.className = "alert"; e.innerHTML = ico("alert") + "<span></span>"; e.lastChild.textContent = ui.err; body.appendChild(e); }
+  if (ui.busy){
+    const s = document.createElement("div"); s.className = "loading";
+    s.innerHTML = `<div class="loader"></div><b style="color:var(--ink)">Reading your materials</b><span>Writing your ${esc(TOOLS[S.tool].toLowerCase())}. This usually takes under a minute.</span>`;
+    body.appendChild(s); return;
+  }
+  if (!out){
+    const e = document.createElement("div"); e.className = "empty";
+    e.innerHTML = `<span class="ring">${ico(TOOL_ICON[S.tool])}</span><b>No ${esc(TOOLS[S.tool].toLowerCase())} yet</b><span>Choose which materials to use, then press Generate. Claude will build it from your own notes.</span>`;
+    body.appendChild(e); return;
+  }
+  const wrap = document.createElement("div"); wrap.style.cssText = "display:flex;flex-direction:column;flex:1";
+  ({summary:drawSummary, flashcards:drawCards, quiz:drawQuiz, practice:drawPractice})[S.tool](wrap, out.data);
+  body.appendChild(wrap);
+  const fn = document.createElement("div"); fn.className = "foot-note";
+  fn.innerHTML = out.example ? `<span class="pill ex">Example</span><span>Made from the example Biology notes so you can see how it works.</span>` : `${ico("spark")}<span>Made from ${out.from} material${out.from === 1 ? "" : "s"}${out.at ? ", " + ago(out.at) : ""}</span>`;
+  body.appendChild(fn);
+}
+function drawSummary(el, d){
+  const s = document.createElement("div"); s.className = "sum";
+  const top = document.createElement("div");
+  const h = document.createElement("h3"); h.textContent = d.title || "Summary";
+  const p = document.createElement("p"); p.className = "lead"; p.textContent = d.summary || "";
+  top.append(h, p); s.appendChild(top);
+  if (d.keyPoints?.length){
+    const sec = document.createElement("div"); sec.innerHTML = `<h4>Key points</h4>`;
+    const ul = document.createElement("ul"); ul.className = "points";
+    d.keyPoints.forEach((k, i) => { const li = document.createElement("li"); li.innerHTML = `<span>${i + 1}</span><div></div>`; li.lastChild.textContent = k; ul.appendChild(li); });
+    sec.appendChild(ul); s.appendChild(sec);
+  }
+  if (d.terms?.length){
+    const sec = document.createElement("div"); sec.innerHTML = `<h4>Terms to know</h4>`;
+    const g = document.createElement("div"); g.className = "terms";
+    d.terms.forEach(t => { const x = document.createElement("div"); x.className = "term"; x.innerHTML = `<b class="hl"></b><p></p>`; x.querySelector("b").textContent = t.term; x.querySelector("p").textContent = t.def; g.appendChild(x); });
+    sec.appendChild(g); s.appendChild(sec);
+  }
+  el.appendChild(s);
+}
+function mkBtn(label, fn, cls = "btn", icon){ const b = document.createElement("button"); b.type = "button"; b.className = cls; b.innerHTML = (icon ? ico(icon) : "") + "<span></span>"; b.lastChild.textContent = label; b.onclick = fn; return b; }
+function drawCards(el, d){
+  const cards = d.cards || []; const st = ui.fc; const n = cards.length;
+  if (!n){ el.textContent = "No cards."; return; }
+  if (st.i >= n) st.i = 0;
+  const c = cards[st.i];
+  const a = document.createElement("div"); a.className = "fc-area";
+  const k = st.known.size, l = st.learning.size;
+  const pr = document.createElement("div"); pr.className = "progress";
+  pr.innerHTML = `<span>Card ${st.i + 1} of ${n}</span><div class="bar"><i class="g" style="width:${k / n * 100}%"></i><i class="y" style="width:${l / n * 100}%"></i></div><span>${Math.round(k / n * 100)}% known</span>`;
+  const fc = document.createElement("button"); fc.type = "button"; fc.className = "fc" + (st.flip ? " flip" : "") + (S.cardStyle === "lined" ? " lined" : "");
+  fc.setAttribute("aria-label", st.flip ? "Answer: " + c.back + ". Press to see the question." : "Question: " + c.front + ". Press to see the answer.");
+  fc.innerHTML = `<div class="fc-in"><div class="face"><span class="tag">Question</span><div class="q"></div><span class="flip-hint">${ico("flip")}Tap to flip</span></div><div class="face back"><span class="tag">Answer</span><div class="a"></div></div></div>`;
+  fc.querySelector(".q").textContent = c.front; fc.querySelector(".a").textContent = c.back;
+  const go = dlt => { st.i = (st.i + dlt + n) % n; st.flip = false; renderTool(); };
+  let sx = null, sy = 0, swiped = false;
+  fc.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiped = false; }, {passive:true});
+  fc.addEventListener("touchend", e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5){ swiped = true; go(dx < 0 ? 1 : -1); } });
+  fc.onclick = () => { if (swiped){ swiped = false; return; } st.flip = !st.flip; fc.classList.toggle("flip", st.flip); };
+  const nav = document.createElement("div"); nav.className = "fc-nav";
+  const prev = mkBtn("", () => go(-1), "btn icon-btn", "left"); prev.setAttribute("aria-label", "Previous card");
+  const next = mkBtn("", () => go(1), "btn icon-btn", "right"); next.setAttribute("aria-label", "Next card");
+  const learn = mkBtn("Still learning", () => { st.learning.add(st.i); st.known.delete(st.i); go(1); }, "btn");
+  const know = mkBtn("Got it", () => { st.known.add(st.i); st.learning.delete(st.i); go(1); }, "btn primary", "check");
+  const sep = document.createElement("span"); sep.className = "sep";
+  const sep2 = sep.cloneNode();
+  nav.append(prev, sep, learn, know, sep2, next);
+  const lg = document.createElement("div"); lg.className = "legend";
+  lg.innerHTML = `<span><i style="background:var(--good)"></i>Got it: ${k}</span><span><i style="background:var(--hl)"></i>Still learning: ${l}</span><span><i style="background:var(--line)"></i>Not rated: ${n - k - l}</span>`;
+  const tools = document.createElement("div"); tools.className = "fc-tools";
+  const hint = document.createElement("span"); hint.className = "mono"; hint.textContent = matchMedia("(hover: none)").matches ? "Swipe to change cards" : "Space flips, arrows move";
+  const tg = document.createElement("div"); tg.className = "toggle"; tg.setAttribute("role", "group"); tg.setAttribute("aria-label", "Card style");
+  for (const [v, label] of [["plain", "Plain"], ["lined", "Lined"]]){
+    const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+    b.setAttribute("aria-pressed", (S.cardStyle || "plain") === v ? "true" : "false");
+    b.onclick = () => { S.cardStyle = v; save(); renderTool(); };
+    tg.appendChild(b);
+  }
+  const tl = document.createElement("span"); tl.style.cssText = "display:inline-flex;align-items:center;gap:8px"; tl.innerHTML = '<span class="mono">Card style</span>'; tl.appendChild(tg);
+  tools.append(hint, tl);
+  a.append(pr, fc, nav, lg, tools); el.appendChild(a);
+}
+function drawQuiz(el, d){
+  const qs = d.questions || []; const st = ui.quiz; const n = qs.length;
+  const right = Object.entries(st).filter(([i, a]) => qs[i] && qs[i].answer === a).length;
+  if (ui.qi >= n){
+    const pct = Math.round(right / n * 100);
+    const r = document.createElement("div"); r.className = "result";
+    r.innerHTML = `<div class="mono">Final score</div><div class="ring-score"><div>${right}/${n}</div></div><h3 style="font-size:20px">${pct === 100 ? "Perfect score" : pct >= 70 ? "Nice work" : "Keep practicing"}</h3><p style="margin:0;color:var(--muted)">Tap a question number to review it.</p>`;
+    const rv = document.createElement("div"); rv.className = "review";
+    qs.forEach((q, i) => { const b = document.createElement("button"); b.type = "button"; b.className = st[i] === q.answer ? "ok" : "no"; b.textContent = i + 1; b.setAttribute("aria-label", `Review question ${i + 1}, ${st[i] === q.answer ? "correct" : "missed"}`); b.onclick = () => { ui.qi = i; renderTool(); }; rv.appendChild(b); });
+    r.append(rv, mkBtn("Retake quiz", () => { ui.quiz = {}; ui.qi = 0; renderTool(); }, "btn primary", "flip"));
+    el.appendChild(r); return;
+  }
+  const i = ui.qi, q = qs[i], picked = st[i];
+  const w = document.createElement("div"); w.className = "quiz";
+  const pr = document.createElement("div"); pr.className = "progress"; pr.style.maxWidth = "none";
+  pr.innerHTML = `<span>Question ${i + 1} of ${n}</span><div class="bar"><i style="width:${Object.keys(st).length / n * 100}%"></i></div><span>${right} correct</span>`;
+  const qt = document.createElement("div"); qt.className = "qtext"; qt.textContent = q.q;
+  const ch = document.createElement("div"); ch.className = "choices";
+  q.choices.forEach((c, j) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "choice";
+    b.innerHTML = `<span class="k">${"ABCDEF"[j] || j + 1}</span><span class="tx"></span>`; b.querySelector(".tx").textContent = c;
+    if (picked !== undefined){ b.disabled = true; if (j === q.answer) b.classList.add("right"); else if (j === picked) b.classList.add("wrong"); }
+    b.onclick = () => { st[i] = j; renderTool(); };
+    ch.appendChild(b);
+  });
+  w.append(pr, qt, ch);
+  if (picked !== undefined){
+    const ok = picked === q.answer;
+    const ex = document.createElement("div"); ex.className = "explain " + (ok ? "ok" : "no");
+    ex.innerHTML = `<b>${ok ? "Correct." : "Not quite."}</b><span></span>`; ex.lastChild.textContent = q.explain || "";
+    w.appendChild(ex);
+  }
+  const nav = document.createElement("div"); nav.className = "quiz-nav";
+  const back = mkBtn("Back", () => { ui.qi--; renderTool(); }, "btn quiet", "left"); back.disabled = i === 0;
+  const fwd = mkBtn(i === n - 1 ? "See results" : "Next question", () => { ui.qi++; renderTool(); }, "btn primary"); fwd.disabled = picked === undefined;
+  nav.append(back, fwd); w.appendChild(nav);
+  el.appendChild(w);
+}
+function drawPractice(el, d){
+  const qs = d.questions || []; const w = document.createElement("div"); w.className = "pq";
+  qs.forEach((q, i) => {
+    const st = ui.practice[i] || (ui.practice[i] = {text:"", shown:false});
+    const it = document.createElement("div"); it.className = "pq-item";
+    const t = document.createElement("div"); t.className = "pq-q"; t.innerHTML = `<span>${i + 1}</span><div></div>`; t.lastChild.textContent = q.q;
+    const lb = document.createElement("label"); lb.htmlFor = "pq" + i; lb.textContent = "Your answer";
+    const ta = document.createElement("textarea"); ta.id = "pq" + i; ta.placeholder = "Answer in your own words, then compare"; ta.value = st.text;
+    ta.oninput = () => st.text = ta.value;
+    const b = mkBtn(st.shown ? "Hide model answer" : "Compare with model answer", () => { st.shown = !st.shown; renderTool(); }, "btn soft");
+    b.style.alignSelf = "flex-start";
+    it.append(t, lb, ta, b);
+    if (st.shown){ const a = document.createElement("div"); a.className = "model"; a.innerHTML = "<b>Model answer</b><span></span>"; a.lastChild.textContent = q.answer; it.appendChild(a); }
+    w.appendChild(it);
+  });
+  el.appendChild(w);
+}
+function resetToolUI(){ ui.fc = {i:0, flip:false, known:new Set(), learning:new Set()}; ui.quiz = {}; ui.qi = 0; ui.practice = {}; ui.err = null; }
+function render(){ renderClasses(); renderHead(); renderMats(); renderTabs(); renderGenBar(); renderTool(); }
+ui.qi = 0;
+
+/* ---------- uploads ---------- */
+const ext = n => (n.split(".").pop() || "").toLowerCase();
+const TEXT_EXT = ["srt","vtt","log","yml","yaml","txt","md","markdown","csv","tsv","json","html","htm","xml","rtf","tex","py","js","java","c","cpp","r","m","sql"];
+async function readPdf(buf){
+  const lib = window.pdfjsLib; if (!lib) throw new Error("PDF reader didn't load");
+  const doc = await lib.getDocument({data:buf}).promise;
+  const n = Math.min(doc.numPages, 150); let out = [];
+  for (let i = 1; i <= n; i++){ const p = await doc.getPage(i); const tc = await p.getTextContent(); out.push(tc.items.map(x => x.str).join(" ")); }
+  return {text:out.join("\n\n"), pages:doc.numPages};
+}
+async function readDocx(buf){ if (!window.mammoth) throw new Error("Word reader didn't load"); const r = await mammoth.extractRawText({arrayBuffer:buf}); return r.value; }
+async function readPptx(buf){
+  if (!window.JSZip) throw new Error("Slides reader didn't load");
+  const z = await JSZip.loadAsync(buf);
+  const names = Object.keys(z.files).filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]);
+  const slides = [];
+  for (const n of names){ const xml = await z.file(n).async("string"); const txt = [...xml.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map(m => m[1]).join(" "); slides.push(`Slide ${slides.length + 1}: ` + decodeXml(txt)); }
+  return {text:slides.join("\n"), pages:slides.length};
+}
+function decodeXml(s){ return s.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&"); }
+async function readPdfImages(buf, max = 8){
+  const doc = await pdfjsLib.getDocument({data:buf}).promise; const out = [];
+  for (let i = 1; i <= Math.min(doc.numPages, max); i++){
+    const pg = await doc.getPage(i); const v0 = pg.getViewport({scale:1}); const sc = Math.min(2, 1400 / Math.max(v0.width, v0.height));
+    const v = pg.getViewport({scale:sc}); const cv = document.createElement("canvas"); cv.width = v.width; cv.height = v.height;
+    const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+    await pg.render({canvasContext:ctx, viewport:v}).promise; out.push(cv.toDataURL("image/jpeg", .8));
+  }
+  return {imgs:out, pages:doc.numPages};
+}
+async function readZipXml(buf, pattern){
+  if (!window.JSZip) throw new Error("Reader didn't load");
+  const z = await JSZip.loadAsync(buf); const names = Object.keys(z.files).filter(n => pattern.test(n)).sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
+  const parts = [];
+  for (const n of names){ const xml = await z.file(n).async("string"); parts.push(decodeXml(xml.replace(/<\/(text:p|text:h|a:p|w:p|row)>/g, "\n").replace(/<[^>]+>/g, " ").replace(/[ \t]+/g, " "))); }
+  return parts.join("\n").replace(/\n\s*\n+/g, "\n").trim();
+}
+function stripRtf(t){ return t.replace(/\\par[d]?/g, "\n").replace(/\{\\\*[^}]*\}/g, "").replace(/\\[a-z]+-?\d* ?/gi, "").replace(/[{}]/g, "").trim(); }
+function shrinkImage(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const im = new Image();
+    im.onload = () => { const max = 1400; const s = Math.min(1, max / Math.max(im.width, im.height)); const c = document.createElement("canvas"); c.width = Math.round(im.width*s); c.height = Math.round(im.height*s); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", .82)); };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Couldn't open that image")); };
+    im.src = url;
+  });
+}
+async function addFiles(files){
+  const c = cls(); let added = 0, failed = [];
+  for (const f of files){
+    const e = ext(f.name);
+    const m = {id:uid(), classId:c.id, name:f.name, type:(e || "file").slice(0,4).toUpperCase(), kind:"file", text:"", fileSize:f.size, added:Date.now(), use:true};
+    try {
+      if (f.type.startsWith("image/") || /^(jpe?g|png|gif|webp|bmp|heic|heif|avif)$/.test(e)){
+        try { m.img = await shrinkImage(f); m.kind = "image"; m.type = "IMG"; }
+        catch { failed.push(f.name + (/hei[cf]/.test(e) ? " (iPhone HEIC photo: this browser can't open it; choose 'Most Compatible' in camera settings or upload a screenshot)" : "")); }
+      }
+      else if (e === "pdf"){
+        const buf = await f.arrayBuffer(); const r = await readPdf(buf.slice(0)); m.pages = r.pages;
+        if (r.text.replace(/\s/g, "").length > 40 * Math.min(r.pages, 3)){ m.text = r.text; m.kind = "text"; }
+        else { const im = await readPdfImages(buf); m.imgs = im.imgs; m.img = im.imgs[0]; m.kind = "image"; m.scanned = true; }
+      }
+      else if (e === "xlsx"){ m.text = await readZipXml(await f.arrayBuffer(), /^xl\/(sharedStrings|worksheets\/sheet\d+)\.xml$/); m.kind = "text"; m.type = "XLS"; }
+      else if (/^od[tps]$/.test(e)){ m.text = await readZipXml(await f.arrayBuffer(), /^content\.xml$/); m.kind = "text"; }
+      else if (e === "rtf"){ m.text = stripRtf(await f.text()); m.kind = "text"; }
+      else if (e === "docx"){ m.text = await readDocx(await f.arrayBuffer()); m.kind = "text"; m.type = "DOC"; }
+      else if (e === "pptx"){ const r = await readPptx(await f.arrayBuffer()); m.text = r.text; m.pages = r.pages; m.kind = "text"; m.type = "PPT"; }
+      else if (TEXT_EXT.includes(e) || f.type.startsWith("text/")){ m.text = await f.text(); m.kind = "text"; }
+      if (m.text.length > 400000) m.text = m.text.slice(0, 400000);
+      if (m.kind === "text" && !m.text.trim()){ m.kind = "file"; }
+    } catch (err) { m.kind = "file"; failed.push(f.name); }
+    if (m.kind === "file") m.use = false;
+    S.materials.push(m); added++;
+  }
+  save(); render();
+  toast(failed.length ? `Added ${added}. Couldn't read: ${failed.join(", ")}` : `Added ${added} file${added===1?"":"s"} to ${c.name}`);
+}
+
+/* ---------- upload + class handlers ---------- */
+$("pickBtn").onclick = () => $("fileInput").click();
+$("photoBtn").onclick = () => $("photoInput").click();
+$("photoInput").onchange = e => { if (e.target.files.length) addFiles([...e.target.files]); e.target.value = ""; };
+window.addEventListener("paste", e => {
+  if (e.target.closest?.("input,textarea")) return;
+  const fs = [...(e.clipboardData?.files || [])]; if (!fs.length) return;
+  e.preventDefault(); addFiles(fs.map((f, i) => f.name && f.name !== "image.png" ? f : new File([f], `Screenshot ${new Date().toLocaleTimeString()}${fs.length > 1 ? " " + (i + 1) : ""}.png`, {type:f.type})));
+});
+function viewImages(m){
+  $("imgName").textContent = m.name; const b = $("imgBody"); b.innerHTML = "";
+  for (const src of (m.imgs || [m.img])){ const im = document.createElement("img"); im.src = src; im.alt = m.name; b.appendChild(im); }
+  openSheet("imgScrim", "imgClose");
+}
+$("imgClose").onclick = () => closeSheet("imgScrim");
+$("fileInput").onchange = e => { if (e.target.files.length) addFiles([...e.target.files]); e.target.value = ""; };
+let dragDepth = 0;
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes("Files");
+window.addEventListener("dragenter", e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; $("dropLabel").textContent = "Drop to add to " + cls().name; $("dropzone").hidden = false; });
+window.addEventListener("dragover", e => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener("dragleave", e => { if (!hasFiles(e)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) $("dropzone").hidden = true; });
+window.addEventListener("drop", e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; $("dropzone").hidden = true; const fs = [...e.dataTransfer.files]; if (fs.length) addFiles(fs); });
+
+let lastFocus = null;
+function openSheet(id, focusId){ lastFocus = document.activeElement; $(id).hidden = false; setTimeout(() => $(focusId)?.focus(), 0); }
+function closeSheet(id){ $(id).hidden = true; lastFocus?.focus?.(); }
+$("pasteBtn").onclick = () => openSheet("pasteScrim", "pasteTitle");
+$("pasteCancel").onclick = () => closeSheet("pasteScrim");
+$("pasteForm").onsubmit = e => {
+  e.preventDefault(); const text = $("pasteText").value.trim(); if (!text){ $("pasteText").focus(); toast("Add some notes first"); return; }
+  const name = $("pasteTitle").value.trim() || "Notes " + new Date().toLocaleDateString();
+  S.materials.push({id:uid(), classId:cls().id, name, type:"NOTE", kind:"text", text, size:text.length, added:Date.now(), use:true});
+  $("pasteText").value = ""; $("pasteTitle").value = ""; closeSheet("pasteScrim"); save(); render(); toast("Notes saved");
+};
+for (const id of ["pasteScrim", "delScrim", "imgScrim"]) $(id).addEventListener("click", e => { if (e.target.id === id) closeSheet(id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") for (const id of ["pasteScrim", "delScrim", "imgScrim"]) if (!$(id).hidden) closeSheet(id); });
+
+$("newClassBtn").onclick = () => { $("newClassBtn").hidden = true; $("addClassForm").hidden = false; $("newClass").focus(); };
+$("newClassCancel").onclick = () => { $("addClassForm").hidden = true; $("newClassBtn").hidden = false; };
+$("addClassForm").onsubmit = e => {
+  e.preventDefault(); const v = $("newClass").value.trim(); if (!v){ $("newClass").focus(); return; }
+  const c = {id:uid(), name:v, color:COLORS[S.classes.length % COLORS.length]};
+  S.classes.push(c); S.active = c.id; $("newClass").value = ""; $("addClassForm").hidden = true; $("newClassBtn").hidden = false;
+  resetToolUI(); save(); render(); toast("Added " + v);
+};
+$("deleteClassBtn").onclick = () => {
+  const c = cls(); const n = matsOf(c.id).length;
+  $("delText").textContent = `${c.name} and its ${n} material${n === 1 ? "" : "s"} will be removed from this browser. This can't be undone.`;
+  openSheet("delScrim", "cdNo");
+};
+$("cdNo").onclick = () => closeSheet("delScrim");
+$("cdYes").onclick = () => {
+  const c = cls();
+  S.materials = S.materials.filter(m => m.classId !== c.id); delete S.outputs[c.id];
+  S.classes = S.classes.filter(x => x.id !== c.id);
+  if (!S.classes.length) S.classes.push({id:uid(), name:"My first class", color:"c1"});
+  S.active = S.classes[0].id; closeSheet("delScrim"); resetToolUI(); save(); render(); toast("Deleted " + c.name);
+};
+$("renameBtn").onclick = () => {
+  const h = $("className"); const c = cls();
+  const inp = document.createElement("input"); inp.id = "renameInput"; inp.className = "field rename-input"; inp.value = c.name; inp.maxLength = 60;
+  inp.setAttribute("aria-label", "Class name");
+  h.textContent = ""; h.appendChild(inp); inp.focus(); inp.select();
+  const done = () => { const v = inp.value.trim(); if (v) c.name = v; save(); render(); };
+  inp.onblur = done; inp.onkeydown = ev => { if (ev.key === "Enter") inp.blur(); if (ev.key === "Escape"){ inp.value = c.name; inp.blur(); } };
+};
+
+/* ---------- AI generation ---------- */
+const FORMATS = {
+  summary:`{"title": string, "summary": string (3-4 sentences), "keyPoints": string[] (5-8 items), "terms": [{"term": string, "def": string}] (5-10 items)}`,
+  flashcards:`{"cards": [{"front": string (a short question or term), "back": string (a short answer)}]} with 10-16 cards`,
+  quiz:`{"questions": [{"q": string, "choices": string[4], "answer": number (index 0-3 of the correct choice), "explain": string (one sentence)}]} with 6-8 questions; vary which position holds the right answer`,
+  practice:`{"questions": [{"q": string (an open-ended exam-style question that asks the student to explain, compare, apply or predict), "answer": string (a model answer of 2-4 sentences)}]} with 4-6 questions`
+};
+function buildPrompt(tool, mats, className){
+  let budget = MAX_PROMPT_CHARS; const parts = [];
+  for (const m of mats.filter(m => m.kind === "text")){
+    const t = m.text.slice(0, Math.max(0, budget)); budget -= t.length;
+    parts.push(`### ${m.name}\n${t}`); if (budget <= 0) break;
+  }
+  const imgs = mats.filter(m => m.kind === "image").map(m => m.name + (m.scanned ? " (scanned pages)" : ""));
+  return `You are a study assistant for a student in the class "${className}". Using ONLY the student's materials below, create ${TOOLS[tool].toLowerCase()} that help them study for an exam. Focus on the most testable ideas. Write in clear, plain language a student would use.
+${imgs.length ? `\nThe attached images are photos or screenshots the student uploaded (${imgs.join(", ")}). Read them as study material too.\n` : ""}
+Return ONLY a JSON object in this exact shape, with no other text:
+${FORMATS[tool]}
+
+STUDENT MATERIALS:
+${parts.join("\n\n") || "(see attached images)"}`;
+}
+function dataUrlToBlob(u){ const [h, b] = u.split(","); const bin = atob(b); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Blob([a], {type:h.match(/:(.*?);/)[1]}); }
+function valid(tool, d){
+  if (!d || typeof d !== "object") return false;
+  if (tool === "summary") return typeof d.summary === "string";
+  if (tool === "flashcards") return Array.isArray(d.cards) && d.cards.length && d.cards.every(c => c.front && c.back);
+  if (tool === "quiz") return Array.isArray(d.questions) && d.questions.length && d.questions.every(q => Array.isArray(q.choices) && q.choices.length >= 2 && Number.isInteger(q.answer));
+  if (tool === "practice") return Array.isArray(d.questions) && d.questions.length && d.questions.every(q => q.q && q.answer);
+}
+const ERRS = {not_granted:"AI is turned off for this page. You can allow it from the page's permissions menu.", rate_limited:"You've hit the AI usage limit for now. Try again in a few minutes.", invalid_json:"The AI answer came back in the wrong shape. Press Generate to try again.", images_unavailable:"This view can't send photos to the AI. Deselect the photos and try again.", image_rejected:"One of the photos couldn't be read. Deselect it and try again."};
+
+$("genBtn").onclick = async () => {
+  const c = cls(); const tool = S.tool; const mats = selected(); if (!mats.length) return;
+  ui.err = null;
+  if (!sample){
+    if (mats.every(m => m.example)){
+      (S.outputs[c.id] ||= {})[tool] = {data:EX_OUT[tool], example:true, from:2};
+      resetToolUI(); save(); render(); toast("Showing the example output");
+    } else {
+      ui.err = "AI generation runs when this page is opened in Claude (claude.ai or the Claude app). Here it can only show the example output for the sample Biology notes.";
+      renderTool();
+    }
+    return;
+  }
+  const imgs = mats.filter(m => m.kind === "image");
+  if (imgs.length && !sampleImages){ ui.err = ERRS.images_unavailable; renderTool(); return; }
+  ui.busy = true; ui.ctl = new AbortController(); renderGenBar(); renderTool();
+  try {
+    const opts = {signal:ui.ctl.signal};
+    if (imgs.length) opts.images = imgs.flatMap(m => m.imgs || [m.img]).slice(0, sampleMaxImages).map(dataUrlToBlob);
+    const data = await sample.json(buildPrompt(tool, mats, c.name), opts);
+    if (!valid(tool, data)) throw {code:"invalid_json"};
+    if (tool === "quiz") data.questions.forEach(q => { q.answer = Math.max(0, Math.min(q.choices.length - 1, q.answer)); });
+    (S.outputs[c.id] ||= {})[tool] = {data, from:mats.length, at:Date.now()};
+    resetToolUI(); save();
+  } catch (e) {
+    if (e?.code !== "cancelled") ui.err = ERRS[e?.code] || "Something went wrong while generating. Press Generate to try again.";
+  } finally {
+    ui.busy = false; ui.ctl = null; if (cls().id === c.id) { renderGenBar(); renderTool(); } renderHead();
+  }
+};
+$("stopBtn").onclick = () => ui.ctl?.abort();
+
+document.addEventListener("keydown", e => {
+  if (S.tool !== "flashcards" || e.target.closest("input,textarea,select")) return;
+  const out = (S.outputs[cls().id] || {}).flashcards; if (!out) return; const n = out.data.cards.length;
+  if (e.key === "ArrowRight"){ ui.fc.i = (ui.fc.i + 1) % n; ui.fc.flip = false; renderTool(); }
+  else if (e.key === "ArrowLeft"){ ui.fc.i = (ui.fc.i - 1 + n) % n; ui.fc.flip = false; renderTool(); }
+  else if (e.key === " " && !e.target.closest("button")){ e.preventDefault(); ui.fc.flip = !ui.fc.flip; renderTool(); }
+});
+
+/* ---------- boot ---------- */
+render();
+(async () => {
+  const saved = await store.get("state");
+  if (saved && saved.v === 1 && Array.isArray(saved.classes) && saved.classes.length) { S = saved; if (addIslamic(S)) { resetToolUI(); save(); } render(); }
+  else save();
+})();
+(async () => {
+  try {
+    sample = window.claude?.use ? await window.claude.use("sample") : null;
+    if (sample){ const lim = await sample.limits().catch(() => null); sampleImages = !!lim?.images; sampleMaxImages = lim?.images?.maxCount || 8; }
+  } catch { sample = null; }
+  aiChecked = true; renderGenBar();
+})();
+})();
+</script>
