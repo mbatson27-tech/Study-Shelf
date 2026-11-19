@@ -18,7 +18,7 @@ The palette, fonts and style come from the ui-ux-pro-max design data.
 
 ## History
 
-| Round | What Millen asked | What changed |
+| Round | What was asked | What changed |
 |---|---|---|
 | 1 | Publish the app and rework the design | The notebook look was refined (contrast, touch targets, phone layout, accessibility), and AI was made to work on the public site. |
 | 2 | Key terms were yellow and hard to read. The sidebar should be able to go away. Add a tab to see the classes. Make it modern and sleek, with light and dark mode, and not bland. | Key terms became cards. The sidebar can be hidden. There is an **All classes** tab and page. A new palette came in with light and dark modes. |
